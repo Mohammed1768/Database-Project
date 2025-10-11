@@ -1,278 +1,289 @@
-\documentclass[a4paper,12pt]{article}
+\documentclass{article}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, margin=1in]{geometry} % Adjust page layout
+
+% The 'ulem' package provides underlining capabilities.
+% The [normalem] option prevents \emph from being changed to underline.
 \usepackage[normalem]{ulem}
-\usepackage{tikz}
-\usepackage{lmodern}
-\usepackage{geometry}
-\geometry{margin=1in}
-\usepackage{seqsplit}
 
-% === Primary key: bold with slightly lower solid underline ===
-\newcommand{\bdunderline}[1]{%
-  \tikz[baseline=(X.base)]{
-    \node[inner sep=0pt,outer sep=0pt](X){\textbf{#1}};
-    \draw[line width=0.5pt] 
-      ([yshift=-1.5pt]X.south west)--([yshift=-1.5pt]X.south east);
-  }%
-}
-\newcommand{\entity}[1]{\textbf{\fontsize{13}{15}\selectfont #1}}
+% --- Custom Commands for Keys ---
+% \pk: For primary keys (solid underline)
+% \fk: For foreign keys (dashed underline)
+\newcommand{\pk}[1]{\uline{#1}}
+\newcommand{\fk}[1]{\dashuline{#1}}
 
-% === Foreign key: bold with dashed underline (- - -) ===
-\newcommand{\bdashuline}[1]{%
-  \tikz[baseline=(X.base)]{
-    \node[inner sep=0pt,outer sep=0pt](X){\textbf{#1}};
-    \draw[dash pattern=on 2pt off 2pt, line width=0.4pt] 
-      ([yshift=-1.5pt]X.south west)--([yshift=-1.5pt]X.south east);
-  }%
-}
-
-% === preserves newlines in parentheses ===
-\newenvironment{schema}{
-  \par\vspace{4pt}\noindent\ttfamily
-  \obeylines % <-- makes LaTeX respect line breaks
-}{\par\vspace{6pt}}
-
-% === Both primary + foreign: bold with solid + dashed lines spaced apart ===
-\newcommand{\bbothuline}[1]{%
-  \tikz[baseline=(X.base)]{
-    \node[inner sep=0pt,outer sep=0pt](X){\textbf{#1}};
-    % solid underline (primary)
-    \draw[line width=0.5pt] 
-      ([yshift=-1.5pt]X.south west)--([yshift=-1.5pt]X.south east);
-    % dashed underline (foreign)
-    \draw[dash pattern=on 2pt off 2pt, line width=0.4pt] 
-      ([yshift=-3.5pt]X.south west)--([yshift=-3.5pt]X.south east);
-  }%
+% --- Custom Environment for Schemas ---
+% This environment formats the schema as requested.
+% It takes one argument: the name of the table.
+% Usage: \begin{schema}{TableName} ...attributes... \end{schema}
+\newenvironment{schema}[1]{%
+  \par\noindent          % Start a new paragraph at the left margin
+  \ttfamily              % Use a monospaced font for the entire block
+  #1 (\par               % 1. Print table name, ' (', and then a newline
+  % Use a list to indent the attributes. We set all spacing to zero
+  % except for the left margin, which creates the indentation.
+  \list{}{\leftmargin=2em \itemindent=0pt \labelwidth=0pt \labelsep=0pt \listparindent=0pt \parsep=0pt \itemsep=0pt \topsep=0pt}%
+  \item[]\relax% This starts the content block for the list
+}{%
+  \endlist% End the list of attributes
+  \par\noindent)% 2. Print the closing parenthesis on a new line at the left margin
 }
 
+% --- Helper Command for Comments ---
+% Ensures that comments below the schema also use the same monospaced font.
+\newcommand{\schemacomment}[1]{\par\noindent{\ttfamily #1}}
+
+% --- Document Start ---
 \begin{document}
 
-\section*{\centering \underline{Database Schema}}
 
-% === Employee Entity
-\subsection*{}
-\entity{Employee} (
-\begin{schema}
-\bdunderline{employee\_id}, 
-first\_name, last\_name, 
-national\_id, email,
-gender, salary, 
-address, official\_day\_off, 
-emergency\_phone\_number, emergency\_name,
-hire\_date, last\_working\_date, 
-years\_of\_experience, type\_of\_contract,
-employment\_status, entitlement\_to\_annual\_leave\_balance, 
-entitlement\_to\_accidental\_leave\_balance
-\end{schema})
+\section*{Database Schema}
+\vspace{1em} 
 
-% === PhoneNumber Multi-valued Attribute
-\subsection*{}
-\entity{PhoneNumber}(
-\begin{schema} \bbothuline{employee\_id}, \bdunderline{number}
-)
-\texttt{PhoneNumber.employee\_id} \textit{references} \texttt{Employee.employee\_id}
+
+
+
+\begin{schema}{Employee}
+    \pk{employee\_id}, \\
+    first\_name, last\_name,\\
+    national\_id, \\
+    email, \\
+    gender,\\
+    salary,\\
+    address,\\
+    official\_day\_off,\\
+    emergency\_phone\_number, emergency\_name,\\
+    hire\_date,\\
+    last\_working\_date,\\
+    years\_of\_experience,\\
+    type\_of\_contract,\\
+    employment\_status,\\
+    entitlement\_to\_annual\_leave\_balance,\\
+    entitlement\_to\_accidental\_leave\_balance 
 \end{schema}
+\vspace{1.5em} 
 
-% === Role Entity
-\subsection*{}
-\entity{Role} (
-\begin{schema}
-\bdunderline{role\_name}, 
-title, rank,
-description, base\_salary,
-initial\_annual\_leave, initial\_accidental\_leave,
-salary\_increase\_factor, overtime\_factor 
-\end{schema})
 
-% === Department Entity
-\subsection*{}
-\entity{Department} (
-\begin{schema}
-\bdunderline{dept\_name}, location
-\end{schema})
 
-% === Replaces Relationship
-\subsection*{}
-\entity{Replaces}(
-\begin{schema} 
-    employee\_on\_leave, replacement\_employee,
-    starting\_date, ending\_date
-)
-\texttt{Replaces.employee\_on\_leave} \textit{references} \texttt{Employee.employee\_id}
-\texttt{Replaces.key replacement\_employee} \textit{references} \texttt{Employee.employee\_id}
+\begin{schema}{PhoneNumber}
+    \pk{\fk{employee\_id}, number}
 \end{schema}
+\schemacomment{PhoneNumber.employee\_id references Employee.employee\_id}
+\vspace{2em} 
 
-% === works_in Relationship
-\subsection*{}
-\entity{works\_in}(
-\begin{schema} 
-\bbothuline{role\_name}, \bbothuline{dept\_name}
-)
-\texttt{works\_in.role\_name} \textit{references} \texttt{Role.role\_name}
-\texttt{works\_in.dept\_name} \textit{references} \texttt{Department.dept\_name}
+
+
+\begin{schema}{Role}
+    \pk{role\_name}, \\
+    title, \\
+    rank, \\ 
+    description, \\
+    base\_salary, \\
+    initial\_annual\_leave, \\
+    initial\_accidental\_leave, \\
+    salary\_increase\_factor, \\
+    overtime\_factor 
 \end{schema}
+\vspace{2em} 
 
-% === has_role Relationship
-\subsection*{}
-\entity{has\_role}(
-\begin{schema}
-\bbothuline{employee\_id}, \bbothuline{role\_name})
-)
-\texttt{has\_role.role\_name} \textit{references} \texttt{Role.role\_name}
-\texttt{has\_role.employee\_id} \textit{references} \texttt{Employee.employee\_id}
+
+
+\begin{schema}{Department}
+    \pk{dept\_name}, \\
+    location
 \end{schema}
+\vspace{2em} 
 
-% === Leave Entity
-\subsection*{}
-\entity{Leave}(
-\begin{schema}
-    \bdunderline{request\_id}, 
-    \bdashuline{employee\_id}, 
-    date\_of\_request, approval\_status, 
-    start\_date, end\_date, 
+
+
+\begin{schema}{replaces}
+    \pk{\fk{employee\_on\_leave}, 
+    \fk{replacement\_employee},
+    starting\_date}, \\
+    ending\_date
+\end{schema}
+\schemacomment{replaces.employee\_on\_leave references Employee.employee\_id}
+\schemacomment{replaces.replacement\_employee references Employee.employee\_id}
+\newpage
+
+
+
+\begin{schema}{works\_in}
+    \pk{\fk{role\_name},
+    \fk{dept\_name}} 
+\end{schema}
+\schemacomment{works\_in.role\_name references Role.role\_name}
+\schemacomment{works\_in.dept\_name references Department.dept\_name}
+\vspace{2em} 
+
+
+
+\begin{schema}{has\_role}
+    \pk{\fk{employee\_id}, 
+    \fk{role\_name}} 
+\end{schema}
+\schemacomment{has\_role.employee\_id references Employee.employee\_id}
+\schemacomment{has\_role.role\_name references Role.role\_name}
+\vspace{2em} 
+
+
+
+
+\begin{schema}{Leave}
+    \pk{request\_id}, \\
+    \fk{employee\_id}, \\
+    date\_of\_request, \\
+    approval\_status, \\
+    start\_date, \\
+    end\_date, \\
     total\_num\_of\_days
-)
-\texttt{Leave.employee\_id} \textit{references} \texttt{Employee.employee\_id}
-\textit{Where:} \texttt{Leave.total\_num\_of\_days = Leave.end\_date - Leave.start\_date}
 \end{schema}
+\schemacomment{Where Leave.total\_num\_of\_days = Leave.end\_date – Leave.start\_date}
+\schemacomment{Leave.employee\_id references Employee.employee\_id}
+\vspace{2em} 
 
-% === Accidental_Leave Entity
-\subsection*{}
-\entity{Accidental\_Leave}(
-\begin{schema}
-    \bbothuline{request\_id}
-)
-\texttt{Accidental\_Leave.request\_id} \textit{references} \texttt{Leave}
+
+
+\begin{schema}{Accidental\_Leave}
+    \pk{\fk{request\_id}}
 \end{schema}
+\schemacomment{Accidental\_Leave.request\_id references Leave.request\_id}
+\vspace{2em} 
 
-% === Annual_Leave Entity
-\subsection*{}
-\entity{Annual\_Leave}(
-\begin{schema}
-    \bbothuline{request\_id}
-)
-\texttt{Annual\_Leave.request\_id} \textit{references} \texttt{Leave}
+
+
+\begin{schema}{Annual\_Leave}
+    \pk{\fk{request\_id}}
 \end{schema}
+\schemacomment{Annual\_Leave.request\_id references Leave.request\_id}
+\vspace{2em} 
 
-% === Compensation_Leave Entity
-\subsection*{}
-\entity{Compensation\_Leave}(
-\begin{schema}
-    \bbothuline{request\_id}, 
-    date\_of\_extra\_workday, reason
-)
-\texttt{Compensation\_Leave.request\_id} \textit{references} \texttt{Leave}
+
+
+\begin{schema}{Medical\_Leave}
+    \pk{\fk{request\_id}}, \\ 
+    insurance\_status, \\
+    disability\_details
 \end{schema}
+\schemacomment{Medical\_Leave.request\_id references Leave.request\_id}
+\vspace{2em} 
 
-% === Medical_Leave Entity
-\subsection*{}
-\entity{Medical\_Leave}(
-\begin{schema}
-    \bbothuline{request\_id}, 
-    insurance\_status, disability\_details
-)
-\texttt{Medical\_Leave.request\_id} \textit{references} \texttt{Leave}
+
+
+\begin{schema}{Compensation\_Leave}
+    \pk{\fk{request\_id}}, \\ 
+    date\_of\_extra\_workday, \\
+    reason
 \end{schema}
+\schemacomment{Compensation\_Leave.request\_id references Leave.request\_id}
+\newpage 
 
-% === Sick_Leave Entity
-\subsection*{}
-\entity{Sick\_Leave}(
-\begin{schema}
-    \bbothuline{request\_id}
-)
-\texttt{Sick\_Leave.request\_id} \textit{references} \texttt{Medical\_Leave}
+
+
+\begin{schema}{Sick\_Leave}
+    \pk{\fk{request\_id}}
 \end{schema}
+\schemacomment{Sick\_Leave.request\_id references Medical\_Leave.request\_id}
+\vspace{2em} 
 
-% === Maternity_Leave Entity
-\subsection*{}
-\entity{Maternity\_Leave}(
-\begin{schema}
-    \bbothuline{request\_id}
-)
-\texttt{Maternity\_Leave.request\_id} \textit{references} \texttt{Medical\_Leave}
+
+
+
+
+
+\begin{schema}{Maternity\_Leave}
+    \pk{\fk{request\_id}}
 \end{schema}
+\schemacomment{Maternity\_Leave.request\_id references Medical\_Leave.request\_id}
+\vspace{2em} 
 
-% === Document Entity
-\subsection*{}
-\entity{Document}(
-\begin{schema}
-    \bdunderline{document\_id}, 
-    \bdashuline{employee\_id}, 
-    type, size, 
-    creation\_date, expiry\_date, 
-    status, storage\_location, 
-    description, filename
-)
-\texttt{Document.employee\_id} \textit{references} \texttt{Employee.employee\_id}
+
+
+\begin{schema}{Document}
+    \pk{document\_id}, \\
+    type,  \\
+    size,  \\
+    creation\_date, \\ 
+    expiry\_date,  \\
+    status,  \\
+    storage\_location, \\ 
+    description,  \\
+    filename,  \\
+    \fk{employee\_id}
 \end{schema}
+\schemacomment{Document.employee\_id references Employee.employee\_id}
+\vspace{2em} 
 
-% === Performance Entity
 
-\subsection*{}
-\entity{Performance}(
-\begin{schema}
-    \bdunderline{performance\_id}, 
-    \bdashuline{employee\_id}, 
-    rating
-)
-\texttt{Performance.employee\_id} \textit{references} \texttt{Employee.employee\_id}
+\begin{schema}{Performance}
+    \pk{performance\_id}, \\ 
+    rating, \\
+    \fk{employee\_id}
 \end{schema}
+\schemacomment{Performance.employee\_id references Employee.employee\_id}
+\vspace{2em} 
 
-% === Performance_Comments Multi-valued Attribute
-\subsection*{}
-\entity{Performance\_Comments}(
-\begin{schema}
-    \bbothuline{performance\_id}, 
-    \bdunderline{comment}
-)
-\texttt{Performance\_Comments.performance\_id} \textit{references} \texttt{Performance.performance\_id}
-\end{schema}
 
-% === Payroll Entity
-\subsection*{}
-\entity{Payroll}(
-\begin{schema}
-    \bdunderline{payroll\_id}, 
-    \bdashuline{employee\_id}, 
-    bonuses\_amount, final\_salary\_amount,
-    deductions\_amount, payment\_date 
-)
-\texttt{Payroll.employee\_id} \textit{references} \texttt{Employee.employee\_id}
-\end{schema}
 
-% === Payroll_Comments Multi-valued Attribute
-\subsection*{}
-\entity{Payroll\_Comments}(
-\begin{schema}
-    \bbothuline{payroll\_id}, 
-    \bdunderline{comment}
-)
-\texttt{Payroll\_Comments.payroll\_id} \textit{references} \texttt{Payroll.payroll\_id}
-\end{schema}
 
-% === Attendance Entity
-\subsection*{}
-\entity{Attendance}(
-\begin{schema}
-    \bdunderline{attendance\_record\_id}, 
-    \bdashuline{employee\_id}, 
-    date, check\_in\_time,
-    check\_out\_time, total\_duration 
-)
-\texttt{Attendance.employee\_id} \textit{references} \texttt{Employee.employee\_id}
-\textit{Where:} {\small \texttt{Attendance.total\_duration = Attendance.check\_out\_time -Attendance.check\_in\_time}}
-\end{schema}
 
-% === Deduction Entity
-\subsection*{}
-\entity{Deduction}(
-\begin{schema}
-    \bdunderline{deduction\_id}, 
-    \bdashuline{employee\_id}, 
-    amount, type,
-    date, status 
-)
-\texttt{Deduction.employee\_id} \textit{references} \texttt{Employee.employee\_id}
+\begin{schema}{Performance\_Comments}
+    \pk{\fk{performance\_id}}, \\ 
+    comment
 \end{schema}
+\schemacomment{Performance\_Comments.performance\_id references Performance.performance\_id}
+\newpage
+
+
+
+\begin{schema}{Payroll}
+    \pk{payroll\_id}, \\ 
+    bonuses\_amount, \\
+    final\_salary\_amount,\\
+    deductions\_amount, \\
+    payment\_date,        \\ 
+    \fk{employee\_id}
+\end{schema}
+\schemacomment{Payroll.employee\_id references Employee.employee\_id}
+\vspace{2em} 
+
+
+
+\begin{schema}{Payroll\_Comments}
+    \pk{\fk{payroll\_id}, comment}
+\end{schema}
+\schemacomment{Payroll\_Comments.payroll\_id references Payroll.payroll\_id}
+\vspace{2em} 
+
+
+
+\begin{schema}{Attendance}
+    \pk{attendance\_record\_id}, \\
+    date, \\
+    check\_in\_time, \\
+    check\_out\_time, \\
+    total\_duration, \\
+    \fk{employee\_id}
+\end{schema}
+\schemacomment{Attendance.employee\_id references Employee.employee\_id}
+\schemacomment{Where total\_duration = check\_out\_time - check\_in\_time}
+\vspace{2em} 
+
+
+\begin{schema}{Deduction}
+    \pk{deduction\_id}, \\
+    amount, \\
+    type,\\
+    date, \\
+    status, \\
+    \fk{employee\_id}
+\end{schema}
+\schemacomment{Deduction.employee\_id references Employee.employee\_id}
+\vspace{2em} 
+
+
+
+
 
 \end{document}
