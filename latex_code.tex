@@ -109,6 +109,8 @@
 \vspace{2em}
 
 
+
+
 \begin{schema}{works\_in}
     \pk{\fk{role\_name},
     \fk{dept\_name}} 
@@ -127,6 +129,15 @@
 \schemacomment{has\_role.role\_name references Role.role\_name}
 \vspace{2em} 
 
+
+
+
+\begin{schema}{reviews}
+    \pk{\fk{request\_id}, \fk{employee\_id}}
+\end{schema}
+\schemacomment{reviews.request\_id references Leave.request\_id}
+\schemacomment{reviews.employee\_id references Employee.employee\_id}
+\vspace{2em} 
 
 
 
@@ -216,6 +227,14 @@
 \vspace{2em} 
 
 
+\begin{schema}{Leave\_Document}
+    \pk{\fk{document\_id}, \fk{request\_id}}
+\end{schema}
+\schemacomment{Leave\_Document.document\_id references Document.document\_id}
+\schemacomment{Leave\_Document.request\_id references Request.reqeust\_id}
+\newpage 
+
+
 \begin{schema}{Performance}
     \pk{performance\_id}, \\ 
     rating, \\
@@ -223,7 +242,6 @@
 \end{schema}
 \schemacomment{Performance.employee\_id references Employee.employee\_id}
 \vspace{2em} 
-\newpage
 
 
 
