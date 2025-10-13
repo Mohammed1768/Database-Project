@@ -37,7 +37,7 @@
 % --- Document Start ---
 \begin{document}
 
-
+\schemacomment{ }
 \section*{Database Schema}
 \vspace{1em} 
 
@@ -95,18 +95,18 @@
 \end{schema}
 \vspace{2em} 
 
-
+\newpage
 
 \begin{schema}{replaces}
-    \pk{\fk{employee\_on\_leave}, 
-    \fk{replacement\_employee},
-    starting\_date}, \\
+    \pk{replacement\_id}, \\
+    \fk{employee\_on\_leave}, \\  
+    \fk{replacement\_employee}, \\
+    starting\_date, \\
     ending\_date
 \end{schema}
 \schemacomment{replaces.employee\_on\_leave references Employee.employee\_id}
 \schemacomment{replaces.replacement\_employee references Employee.employee\_id}
-\newpage
-
+\vspace{2em}
 
 
 \begin{schema}{works\_in}
@@ -159,7 +159,7 @@
 \schemacomment{Annual\_Leave.request\_id references Leave.request\_id}
 \vspace{2em} 
 
-
+\newpage
 
 \begin{schema}{Medical\_Leave}
     \pk{\fk{request\_id}}, \\ 
@@ -177,7 +177,7 @@
     reason
 \end{schema}
 \schemacomment{Compensation\_Leave.request\_id references Leave.request\_id}
-\newpage 
+\vspace{2em} 
 
 
 
@@ -223,7 +223,7 @@
 \end{schema}
 \schemacomment{Performance.employee\_id references Employee.employee\_id}
 \vspace{2em} 
-
+\newpage
 
 
 
@@ -233,8 +233,7 @@
     comment
 \end{schema}
 \schemacomment{Performance\_Comments.performance\_id references Performance.performance\_id}
-\newpage
-
+\vspace{2em}
 
 
 \begin{schema}{Payroll}
