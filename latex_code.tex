@@ -101,8 +101,8 @@
     \pk{replacement\_id}, \\
     \fk{employee\_on\_leave}, \\  
     \fk{replacement\_employee}, \\
-    starting\_date, \\
-    ending\_date
+    start\_date, \\
+    end\_date
 \end{schema}
 \schemacomment{replaces.employee\_on\_leave references Employee.employee\_id}
 \schemacomment{replaces.replacement\_employee references Employee.employee\_id}
@@ -132,15 +132,6 @@
 
 
 
-\begin{schema}{reviews}
-    \pk{\fk{request\_id}, \fk{employee\_id}}
-\end{schema}
-\schemacomment{reviews.request\_id references Leave.request\_id}
-\schemacomment{reviews.employee\_id references Employee.employee\_id}
-\vspace{2em} 
-
-
-
 \begin{schema}{Leave}
     \pk{request\_id}, \\
     \fk{employee\_id}, \\
@@ -152,6 +143,15 @@
 \end{schema}
 \schemacomment{Where Leave.total\_num\_of\_days = Leave.end\_date – Leave.start\_date}
 \schemacomment{Leave.employee\_id references Employee.employee\_id}
+\vspace{2em} 
+
+
+
+\begin{schema}{reviews}
+    \pk{\fk{request\_id}, \fk{employee\_id}}
+\end{schema}
+\schemacomment{reviews.request\_id references Leave.request\_id}
+\schemacomment{reviews.employee\_id references Employee.employee\_id}
 \vspace{2em} 
 
 
@@ -182,15 +182,6 @@
 
 
 
-\begin{schema}{Compensation\_Leave}
-    \pk{\fk{request\_id}}, \\ 
-    date\_of\_extra\_workday, \\
-    reason
-\end{schema}
-\schemacomment{Compensation\_Leave.request\_id references Leave.request\_id}
-\vspace{2em} 
-
-
 
 \begin{schema}{Sick\_Leave}
     \pk{\fk{request\_id}}
@@ -211,6 +202,17 @@
 
 
 
+
+
+\begin{schema}{Compensation\_Leave}
+    \pk{\fk{request\_id}}, \\ 
+    date\_of\_extra\_workday, \\
+    reason
+\end{schema}
+\schemacomment{Compensation\_Leave.request\_id references Leave.request\_id}
+\vspace{2em} 
+
+
 \begin{schema}{Document}
     \pk{document\_id}, \\
     type,  \\
@@ -227,11 +229,11 @@
 \vspace{2em} 
 
 
-\begin{schema}{Leave\_Document}
+\begin{schema}{filed}
     \pk{\fk{document\_id}, \fk{request\_id}}
 \end{schema}
-\schemacomment{Leave\_Document.document\_id references Document.document\_id}
-\schemacomment{Leave\_Document.request\_id references Request.reqeust\_id}
+\schemacomment{filed.document\_id references Document.document\_id}
+\schemacomment{filed.request\_id references Request.reqeust\_id}
 \newpage 
 
 
