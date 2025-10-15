@@ -35,13 +35,41 @@
 \newcommand{\schemacomment}[1]{\par\noindent{\ttfamily #1}}
 \newcommand{\comment}[1]{\par\noindent{\ttfamily\textit{#1}}}
 
-% --- Document Start ---
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{titling}
+\usepackage{setspace}
+\usepackage{graphicx}
+
+% Custom title page formatting
+\pretitle{\begin{center}\LARGE\bfseries\vspace*{3cm}} % push title down a bit
+\posttitle{\par\vspace{0.5em}}
+\preauthor{\begin{center}\large\vspace{2cm}} % spacing before authors
+\postauthor{\end{center}}
+\predate{\begin{center}\vfill\large} % pushes date to bottom
+\postdate{\end{center}}
+
+\title{Database Schema Milestone 1\\[0.5em]\large SQL Issue}
+\author{
+    \textbf{Mohamed Wissam Ibrahim}\\
+    (Tutorial ID: 61-1968)\\[1em]
+    \textbf{Mohamed Alaa Elewainy}\\
+    (Tutorial ID: 61-1292)\\[1em]
+    \textbf{Ahmad Hesham Fathy}\\
+    (Tutorial ID: 61-6552)\\[1em]
+    \textbf{Yehia Ahmad Elkerdany}\\
+    (Tutorial ID: 61-11184)\\[1em]
+    \textbf{Ahmad Karam Sarhan}\\
+    (Tutorial ID: 61-2436)
+}
+\date{October 16, 2025}
+
 \begin{document}
+\maketitle
+\thispagestyle{empty}
 
-\schemacomment{ }
-\section*{Database Schema}
-\vspace{0.5em}
 
+% --- Document Start ---
+\newpage
 
 
 \begin{schema}{Employee}
@@ -230,7 +258,7 @@
 
 
 \comment{--- Medical leave requests are required to submit document(s).}
-\comment{--- Done as a separate entity to avoid NULL values in the Document table}
+\comment{--- Done as a separate table to avoid NULL values in the Document entity}
 \begin{schema}{Medical\_Document}
     \pk{\fk{document\_id}, \fk{request\_id}}
 \end{schema}
