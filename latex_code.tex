@@ -200,7 +200,14 @@
 \schemacomment{Maternity\_Leave.request\_id references Medical\_Leave.request\_id}
 \vspace{2em} 
 
-
+ 
+\begin{schema}{Unpaid\_Leave}
+    \pk{\fk{request\_id}}, \\
+    \fk{document\_id}
+\end{schema}
+\schemacomment{Unpaid\_Leave.request\_id references Leave.request\_id}
+\schemacomment{Unpaid\_Leave.document\_id references Document.document\_id}
+\vspace{2em} 
 
 
 
@@ -229,11 +236,11 @@
 \vspace{2em} 
 
 
-\begin{schema}{filed}
+\begin{schema}{Medical\_Document}
     \pk{\fk{document\_id}, \fk{request\_id}}
 \end{schema}
-\schemacomment{filed.document\_id references Document.document\_id}
-\schemacomment{filed.request\_id references Request.reqeust\_id}
+\schemacomment{Medical\_Document.document\_id references Document.document\_id}
+\schemacomment{Medical\_Document.request\_id references Medical\_Leave.reqeust\_id}
 \newpage 
 
 
