@@ -33,14 +33,14 @@
 % --- Helper Command for Comments ---
 % Ensures that comments below the schema also use the same monospaced font.
 \newcommand{\schemacomment}[1]{\par\noindent{\ttfamily #1}}
+\newcommand{\comment}[1]{\par\noindent{\ttfamily\textit{#1}}}
 
 % --- Document Start ---
 \begin{document}
 
 \schemacomment{ }
 \section*{Database Schema}
-\vspace{1em} 
-
+\vspace{0.5em}
 
 
 
@@ -66,6 +66,7 @@
 
 
 
+\comment{---multi-valued attribute}
 \begin{schema}{PhoneNumber}
     \pk{\fk{employee\_id}, number}
 \end{schema}
@@ -73,7 +74,7 @@
 \vspace{2em} 
 
 
-
+\comment{--- each role works in one and only one department}
 \begin{schema}{Role}
     \pk{role\_name}, \\
     title, \\
@@ -83,8 +84,10 @@
     initial\_annual\_leave, \\
     initial\_accidental\_leave, \\
     salary\_increase\_factor, \\
-    overtime\_factor 
+    overtime\_factor, \\
+    \fk{dept\_name}
 \end{schema}
+\schemacomment{Role.dept\_name references Department.dept\_name}
 \vspace{2em} 
 
 
@@ -110,17 +113,7 @@
 
 
 
-
-\begin{schema}{works\_in}
-    \pk{\fk{role\_name},
-    \fk{dept\_name}} 
-\end{schema}
-\schemacomment{works\_in.role\_name references Role.role\_name}
-\schemacomment{works\_in.dept\_name references Department.dept\_name}
-\vspace{2em} 
-
-
-
+\comment{--- many to many relationship}
 \begin{schema}{has\_role}
     \pk{\fk{employee\_id}, 
     \fk{role\_name}} 
@@ -146,9 +139,8 @@
 \vspace{2em} 
 
 
-
 \begin{schema}{reviews}
-    \pk{\fk{request\_id}, \fk{employee\_id}}
+    \pk{\fk{employee\_id}, \fk{request\_id}}
 \end{schema}
 \schemacomment{reviews.request\_id references Leave.request\_id}
 \schemacomment{reviews.employee\_id references Employee.employee\_id}
@@ -200,7 +192,8 @@
 \schemacomment{Maternity\_Leave.request\_id references Medical\_Leave.request\_id}
 \vspace{2em} 
 
- 
+
+\comment{--- Unpaid leave requests are required to have a memo document}
 \begin{schema}{Unpaid\_Leave}
     \pk{\fk{request\_id}}, \\
     \fk{document\_id}
@@ -236,6 +229,8 @@
 \vspace{2em} 
 
 
+\comment{--- Medical leave requests are required to submit document(s).}
+\comment{--- Done as a separate entity to avoid NULL values in the Document table}
 \begin{schema}{Medical\_Document}
     \pk{\fk{document\_id}, \fk{request\_id}}
 \end{schema}
@@ -254,10 +249,9 @@
 
 
 
-
+\comment{--- Multi-valued attribute}
 \begin{schema}{Performance\_Comments}
-    \pk{\fk{performance\_id}}, \\ 
-    comment
+    \pk{\fk{performance\_id},comment}
 \end{schema}
 \schemacomment{Performance\_Comments.performance\_id references Performance.performance\_id}
 \vspace{2em}
@@ -275,7 +269,7 @@
 \vspace{2em} 
 
 
-
+\comment{--- Multi-valued attribute}
 \begin{schema}{Payroll\_Comments}
     \pk{\fk{payroll\_id}, comment}
 \end{schema}
@@ -297,13 +291,13 @@
 \vspace{2em} 
 
 
+\comment{--- weak entity → employee\_id in PK}
 \begin{schema}{Deduction}
-    \pk{deduction\_id}, \\
+    \pk{deduction\_id, \fk{employee\_id}} \\
     amount, \\
     type,\\
     date, \\
     status, \\
-    \fk{employee\_id}
 \end{schema}
 \schemacomment{Deduction.employee\_id references Employee.employee\_id}
 \vspace{2em} 
