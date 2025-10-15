@@ -2067,7 +2067,6 @@
       </data>
     </edge>
     <edge id="e72" source="n0" target="n94">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="97.51886295303075" sy="52.492735239375406" tx="0.0" ty="0.0">
@@ -2174,7 +2173,6 @@
       </data>
     </edge>
     <edge id="e82" source="n0" target="n70">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="121.80085708170077" sy="52.47468312306614" tx="0.0" ty="0.0">
@@ -2194,7 +2192,7 @@
             <y:Point x="1423.6859137355427" y="-957.722615295011"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
-          <y:Arrows source="crows_foot_one_mandatory" target="none"/>
+          <y:Arrows source="crows_foot_one_optional" target="none"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -2233,7 +2231,6 @@
       </data>
     </edge>
     <edge id="e87" source="n0" target="n69">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="53.76952225771424" sy="52.478873142392786" tx="0.0" ty="0.0">
@@ -2352,13 +2349,14 @@
       </data>
     </edge>
     <edge id="e98" source="n0" target="n79">
+      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="-143.4292071775219" sy="0.0" tx="0.0" ty="0.0">
             <y:Point x="1372.2011062857148" y="-1044.6757383783604"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
-          <y:Arrows source="crows_foot_one_mandatory" target="none"/>
+          <y:Arrows source="crows_foot_one_optional" target="none"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -2376,6 +2374,7 @@
       </data>
     </edge>
     <edge id="e100" source="n68" target="n100">
+      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="-9.919095338345755" tx="0.0" ty="0.0">
@@ -2383,7 +2382,7 @@
             <y:Point x="887.7871941293231" y="-647.8001816691468"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
-          <y:Arrows source="crows_foot_many_mandatory" target="none"/>
+          <y:Arrows source="crows_foot_one_mandatory" target="none"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
