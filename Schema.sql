@@ -67,3 +67,57 @@ create table Role_existsIn_Department(
 	Role_name varchar(50) foreign key references Role(role_name),
 	primary key(department_name, Role_name)
 );
+
+
+
+CREATE TABLE Attendance (
+    attendance_ID INT PRIMARY KEY,
+    date DATE, 
+    check_in_time TIME, 
+    check_out_time TIME, 
+    total_duration TIME, 
+    status VARCHAR(50), 
+    emp_ID INT,
+    FOREIGN KEY (emp_ID) REFERENCES Employee(employee_ID)
+);
+CREATE TABLE Deduction (
+    deduction_ID INT PRIMARY KEY, 
+    emp_ID INT, 
+    date DATE,
+    amount DECIMAL(10, 2),
+    type VARCHAR(50), 
+    status VARCHAR(50),
+    unpaid_ID INT, 
+    attendance_ID INT, 
+    FOREIGN KEY (emp_ID) REFERENCES Employee(employee_ID), 
+    FOREIGN KEY (unpaid_ID) REFERENCES Unpaid_Leave(request_ID),
+    FOREIGN KEY (attendance_ID) REFERENCES Attendance(attendance_ID) 
+);
+
+CREATE TABLE Performance (
+    performance_ID INT PRIMARY KEY,
+    rating INT, 
+    comments VARCHAR(50), 
+    semester CHAR(3), 
+    emp_ID INT, 
+    FOREIGN KEY (emp_ID) REFERENCES Employee(employee_ID) 
+);
+
+CREATE TABLE Employee_Replace_Employee (
+    Emp1_ID INT, 
+    Emp2_ID INT, 
+    from_date DATE, 
+    to_date DATE,
+    PRIMARY KEY (Emp1_ID, Emp2_ID, from_date),
+    FOREIGN KEY (Emp1_ID) REFERENCES Employee(employee_ID), 
+    FOREIGN KEY (Emp2_ID) REFERENCES Employee(employee_ID) 
+    );
+
+    CREATE TABLE Employee_Approve_Leave (
+    Emp1_ID INT, 
+    Leave_ID INT, 
+    status VARCHAR(50), 
+    PRIMARY KEY (Emp1_ID, Leave_ID),
+    FOREIGN KEY (Emp1_ID) REFERENCES Employee(employee_ID), 
+    FOREIGN KEY (Leave_ID) REFERENCES Leave(request_ID) 
+);
