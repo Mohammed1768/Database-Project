@@ -77,7 +77,7 @@ create table Leave(
 	date_of_request date,
 	start_date date,
 	end_date date,
-	num_days as (DATEDIFF(day, start_date, end_date)),
+	num_days as (DATEDIFF(day, start_date, end_date)+1),
 	final_approval_status varchar(50) DEFAULT 'pending',
 	CHECK (final_approval_status IN ('pending', 'approved', 'rejected'))
 );
@@ -162,7 +162,7 @@ create table Attendance (
     date date, 
     check_in_time time, 
     check_out_time time, 
-    total_duration time, 
+    total_duration as CAST( DATEADD( SECOND, DATEDIFF (SECOND,check_in_time,check_out_time) ,0) AS TIME), 
     status varchar(50) DEFAULT 'absent', 
     emp_ID int,
     constraint Att_empFK foreign key (emp_ID) references Employee(employee_ID),
