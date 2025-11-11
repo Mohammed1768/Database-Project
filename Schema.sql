@@ -69,55 +69,55 @@ create table Role_existsIn_Department(
 );
 
 
-
-CREATE TABLE Attendance (
-    attendance_ID INT PRIMARY KEY,
-    date DATE, 
-    check_in_time TIME, 
-    check_out_time TIME, 
-    total_duration TIME, 
-    status VARCHAR(50), 
-    emp_ID INT,
-    FOREIGN KEY (emp_ID) REFERENCES Employee(employee_ID)
-);
-CREATE TABLE Deduction (
-    deduction_ID INT PRIMARY KEY, 
-    emp_ID INT, 
-    date DATE,
-    amount DECIMAL(10, 2),
-    type VARCHAR(50), 
-    status VARCHAR(50),
-    unpaid_ID INT, 
-    attendance_ID INT, 
-    FOREIGN KEY (emp_ID) REFERENCES Employee(employee_ID), 
-    FOREIGN KEY (unpaid_ID) REFERENCES Unpaid_Leave(request_ID),
-    FOREIGN KEY (attendance_ID) REFERENCES Attendance(attendance_ID) 
+create table Attendance (
+    attendance_ID int primary key,
+    date date, 
+    check_in_time time, 
+    check_out_time time, 
+    total_duration time, 
+    status varchar(50), 
+    emp_ID int,
+    foreign key (emp_ID) references Employee(employee_ID)
 );
 
-CREATE TABLE Performance (
-    performance_ID INT PRIMARY KEY,
-    rating INT, 
-    comments VARCHAR(50), 
-    semester CHAR(3), 
-    emp_ID INT, 
-    FOREIGN KEY (emp_ID) REFERENCES Employee(employee_ID) 
+create table Deduction (
+    deduction_ID int primary key, 
+    emp_ID int, 
+    date date,
+    amount decimal(10, 2),
+    type varchar(50), 
+    status varchar(50),
+    unpaid_ID int, 
+    attendance_ID int, 
+    foreign key (emp_ID) references Employee(employee_ID), 
+    foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
+    foreign key (attendance_ID) references Attendance(attendance_ID) 
 );
 
-CREATE TABLE Employee_Replace_Employee (
-    Emp1_ID INT, 
-    Emp2_ID INT, 
-    from_date DATE, 
-    to_date DATE,
-    PRIMARY KEY (Emp1_ID, Emp2_ID, from_date),
-    FOREIGN KEY (Emp1_ID) REFERENCES Employee(employee_ID), 
-    FOREIGN KEY (Emp2_ID) REFERENCES Employee(employee_ID) 
-    );
+create table Performance (
+    performance_ID int primary key,
+    rating int, 
+    comments varchar(50), 
+    semester char(3), 
+    emp_ID int, 
+    foreign key (emp_ID) references Employee(employee_ID) 
+);
 
-    CREATE TABLE Employee_Approve_Leave (
-    Emp1_ID INT, 
-    Leave_ID INT, 
-    status VARCHAR(50), 
-    PRIMARY KEY (Emp1_ID, Leave_ID),
-    FOREIGN KEY (Emp1_ID) REFERENCES Employee(employee_ID), 
-    FOREIGN KEY (Leave_ID) REFERENCES Leave(request_ID) 
+create table Employee_Replace_Employee (
+    Emp1_ID int, 
+    Emp2_ID int, 
+    from_date date, 
+    to_date date,
+    primary key (Emp1_ID, Emp2_ID, from_date),
+    foreign key (Emp1_ID) references Employee(employee_ID), 
+    foreign key (Emp2_ID) references Employee(employee_ID) 
+);
+
+create table Employee_Approve_Leave (
+    Emp1_ID int, 
+    Leave_ID int, 
+    status varchar(50), 
+    primary key (Emp1_ID, Leave_ID),
+    foreign key (Emp1_ID) references Employee(employee_ID), 
+    foreign key (Leave_ID) references Leave(request_ID) 
 );
