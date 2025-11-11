@@ -68,6 +68,32 @@ create table Role_existsIn_Department(
 	primary key(department_name, Role_name)
 );
 
+create table Document (
+    document_ID int primary key identity(1,1),
+    type varchar(50),
+    description varchar(50),
+    file_name varchar(50),
+    creation_date date,
+    expiry_date date,
+    status varchar(50) check (status in ('valid', 'expired')),
+    emp_ID int foreign key references Employee(employee_ID),
+    medical_ID int,
+    unpaid_ID int,
+    foreign key (medical_ID) references Medical_Leave(request_ID),
+    foreign key (unpaid_ID) references Unpaid_Leave(request_ID)
+);
+
+create table Payroll (
+    ID int primary key identity(1,1),
+    payment_date date,
+    final_salary_amount decimal(10,1),
+    from_date date,
+    to_date date,
+    comments varchar(150),
+    bonus_amount decimal(10,2),
+    deductions_amount decimal(10,2),	
+    emp_ID int foreign key references Employee(employee_ID)
+);
 
 create table Attendance (
     attendance_ID int primary key,
