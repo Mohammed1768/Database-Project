@@ -12,7 +12,7 @@ go
 use University_HR_ManagementSystem_Team_No;
 
 create table Department(
-	name varchar(50) primary key identity(1,1), 
+	name varchar(50) primary key, 
 	building_location varchar(50)
 );
 
@@ -49,7 +49,7 @@ create table Employee_Phone (
 
 
 create table Role (
-	role_name varchar(50) primary key identity(1,1), 
+	role_name varchar(50) primary key, 
 	title varchar(50), 
 	description varchar(50), 
 	rank int,
@@ -213,3 +213,4 @@ create table Employee_Approve_Leave (
     foreign key (Emp1_ID) references Employee(employee_ID), 
     foreign key (Leave_ID) references Leave(request_ID) 
 );
+
