@@ -11,7 +11,7 @@ create database University_HR_ManagementSystem_Team_No1;
 use University_HR_ManagementSystem_Team_No1;
 
 go;
-create proc createAllTables as
+create proc createAllTables as		-- et2aked mn el schema 34an ma3od4 a3adelha kol showaya >:(
 	begin
 	create table Department(
 		name varchar(50) primary key, 
@@ -246,13 +246,14 @@ begin
 end;
 go;
 
-/*
-create proc dropAllProceduresFunctionsViews as 
+/*										
+create proc dropAllProceduresFunctionsViews as		
 begin
 	-- drop procedures here
 end;
 go;
-*/
+*/										
+
 
 create procedure clearAllTables as 
 begin
@@ -327,7 +328,7 @@ create proc HR_approval_unpaid
 @request_ID int, @HR_ID int
 as 
 begin
-create table a7a(id int);
+	create table a7a(id int);	-- to be removed
 end
 go;
 
@@ -343,11 +344,11 @@ create proc HR_approval_comp
 as 
 begin
 declare @status bit
-create table a7a(id int);
+	create table a7a(id int);	-- to be removed
 end
 go;
 
-create proc Deduction_hours		-- do we calculate the deduction for the last month only?
+create proc Deduction_hours	
 @employee_ID int
 as 
 begin
@@ -357,8 +358,8 @@ begin
 		select top 1 salary from Employee where @employee_ID = @employee_ID
 	);
 	set @sum = (
-		select sum(total_duration) from Attendance a
-		where total_duration < 8 and 
+		select sum(8 - total_duration) from Attendance a
+		where total_duration < 8 and
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	);
 	set @attendance = (
@@ -378,3 +379,104 @@ begin
 		values(@employee_ID, @first_date, @sum*@rate, 'missing_hours', 'finalized', @attendance);
 end
 go;
+
+
+create proc Deduction_days	
+@employee_ID int
+as 
+begin
+	declare @count int, @rate decimal(10,2), @attendance int, @first_date date
+
+	set @rate = (
+		select top 1 salary from Employee where @employee_ID = @employee_ID
+	);
+	set @count = (
+		select count(*) from Attendance a
+		where 
+		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
+	);
+	set @attendance = (
+		select top 1 attendance_ID from Attendance a
+		where total_duration < 8 and 
+		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
+	);
+	set @first_date = (
+		select top 1 date from Attendance a
+		where attendance_ID = @attendance
+	);
+
+	if (@count >= 22) begin return end;
+
+	--  	(emp_ID, date, amount, type, status, attendance_ID)
+	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
+		values(@employee_ID, @first_date, (22 - @count)*@rate, 'missing_days', 'finalized', @attendance);
+end
+go;
+
+create proc Deduction_unpaid	
+@employee_ID int
+as 
+begin
+	declare @count int, @rate decimal(10,2)
+
+	set @rate = (
+		select top 1 salary from Employee where @employee_ID = @employee_ID
+	);
+	
+	create table tmp(start_date date, end_date date, days int);
+
+	insert into tmp(start_date, end_date)
+		select l.start_date,l.end_date
+		from Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID)
+		where month(end_date) = month(getdate()) and year(end_date) = year(getdate())
+
+	update tmp set start_date = 
+	datefromparts(
+			year(getdate()),    -- year
+			month(getdate()),   -- month
+			1                   -- day
+	)
+	where month(start_date) != month(getdate());
+	update tmp set days = day(end_date-start_date) + 1;
+
+	set @count = (select sum(days) from tmp);
+
+	--  	(emp_ID, date, amount, type, status, attendance_ID)
+	insert into Deduction(emp_ID, amount, type, status) 
+		values(@employee_ID, 8*@count*@rate, 'unpaid', 'finalized');
+end
+go;
+
+create function Bonus_amount(@employee_id int)
+returns int as 
+begin
+	declare @sum int, @rate int, @bonus int;
+
+	set @sum = (
+		select sum(total_duration) from Attendance a
+		where
+		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
+	);
+	set @rate = (
+		select top 1 salary from Employee where @employee_ID = @employee_ID
+	);
+	
+	set @bonus = (@sum - 22*8) * @rate;
+	if (@bonus <= 0) return 0;
+	return @bonus;
+
+end
+go;
+
+create proc Add_Payroll
+@employee_id int,
+@from date, @to date
+as 
+begin
+declare @bonus int, @deduction int
+
+set @bonus = exec  
+
+
+
+-- from - to in payroll but no from-to in bonus???
