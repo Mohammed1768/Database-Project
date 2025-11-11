@@ -7,9 +7,9 @@
 */
 
 
-create database MS2;
+create database University_HR_ManagementSystem_Team_No;
 go
-use MS2;
+use University_HR_ManagementSystem_Team_No;
 
 create table Department(
 	name varchar(50) primary key, 
