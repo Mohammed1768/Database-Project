@@ -1,5 +1,5 @@
 ﻿
---بسم الله الرحمن الرحيم  
+-- بسم الله الرحمن الرحيم
 
 /*   /\_/\
 *   (= ._.)
@@ -8,6 +8,7 @@
 
 
 create database MS2;
+go
 use MS2;
 
 create table Department(
