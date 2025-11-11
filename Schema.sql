@@ -12,7 +12,7 @@ go
 use MS2;
 
 create table Department(
-	name varchar(50) primary key identity(1,1), 
+	name varchar(50) primary key, 
 	building_location varchar(50)
 );
 
@@ -35,7 +35,7 @@ create table Employee(
 	hire_date date, 
 	last_working_date date, 
 	dept_name varchar (50), 
-	constraint deptFK foreign key (dept_name) references Department(name),
+	constraint Emp_deptFK foreign key (dept_name) references Department(name),
 	CHECK (type_of_contract IN ('full_time', 'part_time')),
 	CHECK (employment_status IN ('active', 'onleave', 'notice_period','resigned'))
 );
@@ -44,12 +44,12 @@ create table Employee_Phone (
 	emp_ID int, 
 	phone_num char(11),
 	primary key(emp_ID, phone_num),
-	constraint empFK foreign key (emp_ID) references Employee(employee_ID)
+	constraint Phone_empFK foreign key (emp_ID) references Employee(employee_ID)
 );
 
 
 create table Role (
-	role_name varchar(50) primary key identity(1,1), 
+	role_name varchar(50) primary key, 
 	title varchar(50), 
 	description varchar(50), 
 	rank int,
@@ -86,16 +86,16 @@ create table Annual_Leave(
 	request_ID int primary key,
 	emp_ID int,
 	replacement_emp int,
-	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
-	constraint leaveFK foreign key (request_ID) references Leave (request_ID),
-	constraint repEmpFK foreign key (replacement_emp) references Employee (employee_ID)
+	constraint Ann_empFK foreign key (emp_ID) references Employee (employee_ID),
+	constraint Ann_leaveFK foreign key (request_ID) references Leave (request_ID),
+	constraint Ann_repEmpFK foreign key (replacement_emp) references Employee (employee_ID)
 );
 
 create table Accidental_Leave(
 	request_ID int primary key,
 	emp_ID int,
-	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
-	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+	constraint Acc_empFK foreign key (emp_ID) references Employee (employee_ID),
+	constraint Acc_leaveFK foreign key (request_ID) references Leave (request_ID)
 );
 
 create table Medical_Leave(
@@ -104,16 +104,16 @@ create table Medical_Leave(
 	disability_details VARCHAR(50),
 	type VARCHAR(50),
 	Emp_ID int,
-	constraint empFK foreign key (Emp_ID) references Employee (employee_ID),
-	constraint leaveFK foreign key (request_ID) references Leave (request_ID),
+	constraint Med_empFK foreign key (Emp_ID) references Employee (employee_ID),
+	constraint Med_leaveFK foreign key (request_ID) references Leave (request_ID),
 	CHECK (type IN ('sick', 'maternity'))
 );
 
 create table Unpaid_Leave(
 	request_ID int primary key,
 	Emp_ID int,
-	constraint empFK foreign key (Emp_ID) references Employee (employee_ID),
-	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+	constraint Unp_empFK foreign key (Emp_ID) references Employee (employee_ID),
+	constraint Unp_leaveFK foreign key (request_ID) references Leave (request_ID)
 );
 
 create table Compensation_Leave(
@@ -122,9 +122,9 @@ create table Compensation_Leave(
 	date_of_original_work_day date,
 	emp_ID int,
 	replacement_emp_ID int,
-	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
-	constraint repEmpFK foreign key (replacement_emp_ID) references Employee (employee_ID),
-	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+	constraint Com_empFK foreign key (emp_ID) references Employee (employee_ID),
+	constraint Com_repEmpFK foreign key (replacement_emp_ID) references Employee (employee_ID),
+	constraint Com_leaveFK foreign key (request_ID) references Leave (request_ID)
 );
 
 create table Document (
@@ -138,9 +138,9 @@ create table Document (
     emp_ID int,
     medical_ID int,
     unpaid_ID int,
-	constraint empFK foreign key (emp_ID) references Employee(employee_ID),
-    constraint medicalFK foreign key (medical_ID) references Medical_Leave(request_ID),
-    constraint unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
+	constraint Doc_empFK foreign key (emp_ID) references Employee(employee_ID),
+    constraint Doc_medicalFK foreign key (medical_ID) references Medical_Leave(request_ID),
+    constraint Doc_unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
 	CHECK (status IN ('valid', 'expired'))
 );
 
@@ -154,7 +154,7 @@ create table Payroll (
     bonus_amount decimal(10,2),
     deductions_amount decimal(10,2),	
     emp_ID int, 
-	constraint empFK foreign key (emp_ID) references Employee(employee_ID)
+	constraint Pay_empFK foreign key (emp_ID) references Employee(employee_ID)
 );
 
 create table Attendance (
@@ -165,7 +165,7 @@ create table Attendance (
     total_duration time, 
     status varchar(50) DEFAULT 'absent', 
     emp_ID int,
-    constraint empFK foreign key (emp_ID) references Employee(employee_ID),
+    constraint Att_empFK foreign key (emp_ID) references Employee(employee_ID),
 	CHECK (status IN ('absent', 'attended'))
 );
 
@@ -178,9 +178,9 @@ create table Deduction (
     status varchar(50) DEFAULT 'pending',
     unpaid_ID int, 
     attendance_ID int, 
-    constraint empFK foreign key (emp_ID) references Employee(employee_ID), 
-    constraint unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
-    constraint attendanceFK foreign key (attendance_ID) references Attendance(attendance_ID),
+    constraint Ded_empFK foreign key (emp_ID) references Employee(employee_ID), 
+    constraint Ded_unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
+    constraint Ded_attendanceFK foreign key (attendance_ID) references Attendance(attendance_ID),
 	CHECK (type IN ('unpaid', 'missing_hours', 'missing_days')),
 	CHECK (status IN ('pending', 'finalized'))
 );
@@ -191,7 +191,7 @@ create table Performance (
     comments varchar(50), 
     semester char(3), 
     emp_ID int, 
-    constraint empFK foreign key (emp_ID) references Employee(employee_ID),
+    constraint Per_empFK foreign key (emp_ID) references Employee(employee_ID),
 	CHECK (rating >= 1 AND rating <= 5)
 );
 
