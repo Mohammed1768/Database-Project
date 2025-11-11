@@ -12,12 +12,12 @@ go
 use University_HR_ManagementSystem_Team_No;
 
 create table Department(
-	name varchar(50) primary key, 
+	name varchar(50) primary key identity(1,1), 
 	building_location varchar(50)
 );
 
 create table Employee(
-	employee_ID int primary key, 
+	employee_ID int primary key identity(1,1), 
 	first_name varchar(50), last_name varchar (50), 
 	email varchar(50), 
 	password varchar (50), 
@@ -34,18 +34,22 @@ create table Employee(
 	salary decimal(10,2), 
 	hire_date date, 
 	last_working_date date, 
-	dept_name varchar (50) foreign key references Department(name)
+	dept_name varchar (50), 
+	constraint deptFK foreign key (dept_name) references Department(name),
+	CHECK (type_of_contract IN ('full_time', 'part_time')),
+	CHECK (employment_status IN ('active', 'onleave', 'notice_period','resigned'))
 );
 
 create table Employee_Phone (
-	emp_ID int foreign key references Employee(employee_ID), 
+	emp_ID int, 
 	phone_num char(11),
-	primary key(emp_ID, phone_num)
+	primary key(emp_ID, phone_num),
+	constraint empFK foreign key (emp_ID) references Employee(employee_ID)
 );
 
 
 create table Role (
-	role_name varchar(50) primary key, 
+	role_name varchar(50) primary key identity(1,1), 
 	title varchar(50), 
 	description varchar(50), 
 	rank int,
@@ -69,59 +73,55 @@ create table Role_existsIn_Department(
 );
 
 create table Leave(
-	request_ID int,
+	request_ID int primary key identity(1,1),
 	date_of_request date,
 	start_date date,
 	end_date date,
-	num_days as end_date - start_date,
-	final_approval_status varchar(50),
-	constraint leavePK primary key (request_ID)
+	num_days as (DATEDIFF(day, start_date, end_date)),
+	final_approval_status varchar(50) DEFAULT 'pending',
+	CHECK (final_approval_status IN ('pending', 'approved', 'rejected'))
 );
 
 create table Annual_Leave(
-	request_ID int,
+	request_ID int primary key,
 	emp_ID int,
 	replacement_emp int,
-	constraint AnnualLeavePK primary key (request_ID),
 	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
 	constraint leaveFK foreign key (request_ID) references Leave (request_ID),
 	constraint repEmpFK foreign key (replacement_emp) references Employee (employee_ID)
 );
 
 create table Accidental_Leave(
-	request_ID int,
+	request_ID int primary key,
 	emp_ID int,
-	constraint AccidentalLeavePK primary key (request_ID),
 	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
 	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
 );
 
 create table Medical_Leave(
-	request_ID int,
+	request_ID int primary key,
 	insurance_status bit,
 	disability_details VARCHAR(50),
 	type VARCHAR(50),
 	Emp_ID int,
-	constraint MedicalLeavePK primary key (request_ID),
 	constraint empFK foreign key (Emp_ID) references Employee (employee_ID),
-	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+	constraint leaveFK foreign key (request_ID) references Leave (request_ID),
+	CHECK (type IN ('sick', 'maternity'))
 );
 
 create table Unpaid_Leave(
-	request_ID int,
+	request_ID int primary key,
 	Emp_ID int,
-	constraint UnpaidLeavePK primary key (request_ID),
 	constraint empFK foreign key (Emp_ID) references Employee (employee_ID),
 	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
 );
 
 create table Compensation_Leave(
-	request_ID int,
+	request_ID int primary key,
 	reason varchar(50),
 	date_of_original_work_day date,
 	emp_ID int,
 	replacement_emp_ID int,
-	constraint CompensationLeavePK primary key (request_ID),
 	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
 	constraint repEmpFK foreign key (replacement_emp_ID) references Employee (employee_ID),
 	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
@@ -135,11 +135,13 @@ create table Document (
     creation_date date,
     expiry_date date,
     status varchar(50),
-    emp_ID int foreign key references Employee(employee_ID),
+    emp_ID int,
     medical_ID int,
     unpaid_ID int,
-    foreign key (medical_ID) references Medical_Leave(request_ID),
-    foreign key (unpaid_ID) references Unpaid_Leave(request_ID)
+	constraint empFK foreign key (emp_ID) references Employee(employee_ID),
+    constraint medicalFK foreign key (medical_ID) references Medical_Leave(request_ID),
+    constraint unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
+	CHECK (status IN ('valid', 'expired'))
 );
 
 create table Payroll (
@@ -151,41 +153,46 @@ create table Payroll (
     comments varchar(150),
     bonus_amount decimal(10,2),
     deductions_amount decimal(10,2),	
-    emp_ID int foreign key references Employee(employee_ID)
+    emp_ID int, 
+	constraint empFK foreign key (emp_ID) references Employee(employee_ID)
 );
 
 create table Attendance (
-    attendance_ID int primary key,
+    attendance_ID int primary key identity(1,1),
     date date, 
     check_in_time time, 
     check_out_time time, 
     total_duration time, 
-    status varchar(50), 
+    status varchar(50) DEFAULT 'absent', 
     emp_ID int,
-    foreign key (emp_ID) references Employee(employee_ID)
+    constraint empFK foreign key (emp_ID) references Employee(employee_ID),
+	CHECK (status IN ('absent', 'attended'))
 );
 
 create table Deduction (
-    deduction_ID int primary key, 
+    deduction_ID int primary key identity(1,1), 
     emp_ID int, 
     date date,
     amount decimal(10, 2),
     type varchar(50), 
-    status varchar(50),
+    status varchar(50) DEFAULT 'pending',
     unpaid_ID int, 
     attendance_ID int, 
-    foreign key (emp_ID) references Employee(employee_ID), 
-    foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
-    foreign key (attendance_ID) references Attendance(attendance_ID) 
+    constraint empFK foreign key (emp_ID) references Employee(employee_ID), 
+    constraint unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
+    constraint attendanceFK foreign key (attendance_ID) references Attendance(attendance_ID),
+	CHECK (type IN ('unpaid', 'missing_hours', 'missing_days')),
+	CHECK (status IN ('pending', 'finalized'))
 );
 
 create table Performance (
-    performance_ID int primary key,
+    performance_ID int primary key identity(1,1),
     rating int, 
     comments varchar(50), 
     semester char(3), 
     emp_ID int, 
-    foreign key (emp_ID) references Employee(employee_ID) 
+    constraint empFK foreign key (emp_ID) references Employee(employee_ID),
+	CHECK (rating >= 1 AND rating <= 5)
 );
 
 create table Employee_Replace_Employee (
