@@ -317,27 +317,20 @@ end
 go;
 
 
-create proc HR_approval_unpaid 
-@request_ID int, @HR_ID int
-as 
-begin
-declare @status bit
 /* 
 Unpaid leave can be requested when an employee has no annual leave balance remaining. The
 request must include a memo document, and it requires approval from a higher-ranking
 employee, the Upper Board department, and the HR representative as in section 2, . The
 maximum number of unpaid leave days allowed is 30.
 */
+create proc HR_approval_unpaid 
+@request_ID int, @HR_ID int
+as 
+begin
 create table a7a(id int);
 end
 go;
 
-
-create proc HR_approval_comp 
-@request_ID int, @HR_ID int
-as 
-begin
-declare @status bit
 /*
 Compensation leave is granted when an employee works on their official day off. In return, the
 employee is allowed to take another working day off within the same month. The request must
@@ -345,7 +338,43 @@ include the reason and the date of the original extra workday.
 Compensations are approved by the employee’s HR representative.
 When an employee applies for a compensation leave, another employee must replace them.
 */
+create proc HR_approval_comp 
+@request_ID int, @HR_ID int
+as 
+begin
+declare @status bit
 create table a7a(id int);
 end
 go;
 
+create proc Deduction_hours		-- do we calculate the deduction for the last month only?
+@employee_ID int
+as 
+begin
+	declare @sum int, @rate decimal(10,2), @attendance int, @first_date date
+
+	set @rate = (
+		select top 1 salary from Employee where @employee_ID = @employee_ID
+	);
+	set @sum = (
+		select sum(total_duration) from Attendance a
+		where total_duration < 8 and 
+		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
+	);
+	set @attendance = (
+		select top 1 attendance_ID from Attendance a
+		where total_duration < 8 and 
+		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
+	);
+	set @first_date = (
+		select top 1 date from Attendance a
+		where attendance_ID = @attendance
+	);
+
+	if (@sum = 0) begin return end;
+
+	--  	(deduction_ID, emp_ID, date, amount, type, status, attendance_ID)
+	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
+		values(@employee_ID, @first_date, @sum*@rate, 'missing_hours', 'finalized', @attendance);
+end
+go;
