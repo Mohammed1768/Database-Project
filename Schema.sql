@@ -75,7 +75,7 @@ create table Document (
     file_name varchar(50),
     creation_date date,
     expiry_date date,
-    status varchar(50) check (status in ('valid', 'expired')),
+    status varchar(50),
     emp_ID int foreign key references Employee(employee_ID),
     medical_ID int,
     unpaid_ID int,
