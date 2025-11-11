@@ -84,4 +84,28 @@ create proc HR_approval_an_acc
 @request_ID int, @HR_ID int
 as 
 begin
+declare @status bit
+declare @annual_balance int
+declare @accidental_balance int
+
+set @annual_balance = (
+	select annual_balance from Employee e inner join Annual_Leave a on(e.employee_ID = a.emp_ID)
+	where a.request_ID = @request_ID
+);
+set @accidental_balance = (
+	select accidental_balance from Employee e inner join Accidental_Leave a on(e.employee_ID = a.emp_ID)
+	where a.request_ID = @request_ID
+);
+
+if (@accidental_balance>1 or @annual_balance>1)
+	begin set @status = 1 end;
+else
+	begin set @status = 0 end;
+
+update Employee_Approve_Leave 
+set status = @status 
+where Emp1_ID=@HR_ID and Leave_ID=@request_ID;
+end
+go;
+
 
