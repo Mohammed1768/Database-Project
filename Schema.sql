@@ -68,6 +68,65 @@ create table Role_existsIn_Department(
 	primary key(department_name, Role_name)
 );
 
+create table Leave(
+	request_ID int,
+	date_of_request date,
+	start_date date,
+	end_date date,
+	num_days as end_date - start_date,
+	final_approval_status varchar(50),
+	constraint leavePK primary key (request_ID)
+);
+
+create table Annual_Leave(
+	request_ID int,
+	emp_ID int,
+	replacement_emp int,
+	constraint AnnualLeavePK primary key (request_ID),
+	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
+	constraint leaveFK foreign key (request_ID) references Leave (request_ID),
+	constraint repEmpFK foreign key (replacement_emp) references Employee (employee_ID)
+);
+
+create table Accidental_Leave(
+	request_ID int,
+	emp_ID int,
+	constraint AccidentalLeavePK primary key (request_ID),
+	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
+	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+);
+
+create table Medical_Leave(
+	request_ID int,
+	insurance_status bit,
+	disability_details VARCHAR(50),
+	type VARCHAR(50),
+	Emp_ID int,
+	constraint MedicalLeavePK primary key (request_ID),
+	constraint empFK foreign key (Emp_ID) references Employee (employee_ID),
+	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+);
+
+create table Unpaid_Leave(
+	request_ID int,
+	Emp_ID int,
+	constraint UnpaidLeavePK primary key (request_ID),
+	constraint empFK foreign key (Emp_ID) references Employee (employee_ID),
+	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+);
+
+create table Compensation_Leave(
+	request_ID int,
+	reason varchar(50),
+	date_of_original_work_day date,
+	emp_ID int,
+	replacement_emp_ID int,
+	constraint CompensationLeavePK primary key (request_ID),
+	constraint empFK foreign key (emp_ID) references Employee (employee_ID),
+	constraint repEmpFK foreign key (replacement_emp_ID) references Employee (employee_ID),
+	constraint leaveFK foreign key (request_ID) references Leave (request_ID)
+);
+
 create table Document (
     document_ID int primary key identity(1,1),
     type varchar(50),
