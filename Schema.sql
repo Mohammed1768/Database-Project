@@ -213,7 +213,7 @@ create table Employee_Approve_Leave (
     foreign key (Emp1_ID) references Employee(employee_ID), 
     foreign key (Leave_ID) references Leave(request_ID) 
 );
-
+go
 -- 2.2 
 Create view allEmployeeProfiles as 
 select 
