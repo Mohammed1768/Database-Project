@@ -12,7 +12,7 @@ use University_HR_ManagementSystem_Team_No1;
 go;
 
 
--- mohamed et2aked mn el schema 34an ana byetla3 3eny wana ba3adelha >:(
+-- mohamed et2aked mn el schema 34an byetla3 3eny wana ba3adelha wallahy
 create proc createAllTables as	
 begin
 
@@ -246,6 +246,33 @@ begin
 	drop table if exists  Department;
 end;
 go;
+
+
+-- delete the tables in a revere topological order
+create procedure dropAllTables as 
+begin
+	drop table Employee_Approve_Leave;
+	drop table Employee_Replace_Employee;
+	drop table Performance;
+	drop table Deduction;
+	drop table Attendance;	
+	drop table Payroll;
+	drop table Document;
+	drop table Compensation_Leave;
+	drop table Unpaid_Leave;
+	drop table Medical_Leave;
+	drop table Accidental_Leave;
+	drop table Annual_Leave;
+	drop table Leave;
+	drop table Role_existsIn_Department;
+	drop table Employee_Role;
+	drop table Role;
+	drop table Employee_Phone;
+	drop table Employee;
+	drop table Department;
+end;
+go;
+
 
 /*										
 create proc dropAllProceduresFunctionsViews as		
@@ -484,7 +511,7 @@ end
 /*
 Questions:
 	How will the bonus amount be calculated using extra hours or extra days
-
+	
 	Will the deduction be calculated using unfulfilled hours or unfulfilled days? i.e if someone 
 		attended 30 days 7 hours each will they recieve an hourly deduction?
 
