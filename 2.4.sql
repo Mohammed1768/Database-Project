@@ -9,10 +9,13 @@
 
 create database University_HR_ManagementSystem_Team_No1;
 use University_HR_ManagementSystem_Team_No1;
-
 go;
-create proc createAllTables as		-- et2aked mn el schema 34an ma3od4 a3adelha kol showaya >:(
-	begin
+
+
+-- mohamed et2aked mn el schema 34an ana byetla3 3eny wana ba3adelha >:(
+create proc createAllTables as	
+begin
+
 	create table Department(
 		name varchar(50) primary key, 
 		building_location varchar(50)
@@ -79,7 +82,7 @@ create proc createAllTables as		-- et2aked mn el schema 34an ma3od4 a3adelha kol
 		date_of_request date,
 		start_date date,
 		end_date date,
-		num_days as (DATEDIFF(day, start_date, end_date)),
+		num_days as (DATEDIFF(day, start_date, end_date)+1),
 		final_approval_status varchar(50) DEFAULT 'pending',
 		CHECK (final_approval_status IN ('pending', 'approved', 'rejected'))
 	);
@@ -164,7 +167,7 @@ create proc createAllTables as		-- et2aked mn el schema 34an ma3od4 a3adelha kol
 		date date, 
 		check_in_time time, 
 		check_out_time time, 
-		total_duration time, 
+		total_duration as CAST( DATEADD( SECOND, DATEDIFF (SECOND,check_in_time,check_out_time) ,0) AS TIME), 
 		status varchar(50) DEFAULT 'absent', 
 		emp_ID int,
 		constraint Att_empFK foreign key (emp_ID) references Employee(employee_ID),
@@ -216,10 +219,8 @@ create proc createAllTables as		-- et2aked mn el schema 34an ma3od4 a3adelha kol
 		foreign key (Leave_ID) references Leave(request_ID) 
 	);
 
-
 end;
 
-go;
 
 
 create proc dropAllTables as 
@@ -254,7 +255,6 @@ end;
 go;
 */										
 
-
 create procedure clearAllTables as 
 begin
 	truncate table Employee_Approve_Leave;
@@ -284,7 +284,7 @@ create function HRLoginValidation(@employee_id int, @password varchar(50))
 returns bit as 
 begin	
 	if exists (select * from Employee where employee_ID = @employee_id and password=@password)
-		begin return 1; end
+		 return 1
 	return 0;
 end;
 go;
@@ -306,15 +306,18 @@ set @accidental_balance = (
 	where a.request_ID = @request_ID
 );
 
-if (@accidental_balance>1 or @annual_balance>1)
-	begin set @status = 1 end;
+if (@accidental_balance>0 or @annual_balance>0)
+	 set @status = 1;
 else
-	begin set @status = 0 end;
+	 set @status = 0;
 
-update Employee_Approve_Leave 
-set status = @status 
-where Emp1_ID=@HR_ID and Leave_ID=@request_ID;
+update Employee_Approve_Leave
+set status = case when
+    @status = 1 then 'approved' 
+    else 'rejected' 
 end
+where Emp1_ID = @HR_ID and Leave_ID = @request_ID;
+
 go;
 
 
@@ -468,6 +471,7 @@ begin
 end
 go;
 
+-- from - to in payroll but no from-to in bonus???
 create proc Add_Payroll
 @employee_id int,
 @from date, @to date
@@ -475,8 +479,4 @@ as
 begin
 declare @bonus int, @deduction int
 
-set @bonus = exec  
-
-
-
--- from - to in payroll but no from-to in bonus???
+set @bonus = exec   --?? tf
