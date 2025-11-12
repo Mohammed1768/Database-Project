@@ -1,6 +1,34 @@
 --2.2 d)
 USE MS2
 GO
+
+go
+-- 2.2 
+Create view allEmployeeProfiles as 
+select 
+employee_ID , first_name , last_name, gender , email, address, years_of_experience, 
+official_day_off, type_of_contract, employment_status, annual_balance, accidental_balance
+
+from Employee;
+go 
+
+create view NoEmployeeDept as 
+select dept_name, count(employee_ID) as NoOfEmployees
+from Employee
+where dept_name is not null
+group by dept_name;
+go
+
+create view allPerformance as 
+select * from Performance;
+where semester LIKE 'W%';
+go
+
+
+
+
+
+
 CREATE VIEW allRejectedMedicals AS
 SELECT
     ml.request_ID,
