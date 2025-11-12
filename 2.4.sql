@@ -410,7 +410,6 @@ begin
 
 	if (@count >= 22) begin return end;
 
-	--  	(emp_ID, date, amount, type, status, attendance_ID)
 	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
 		values(@employee_ID, @first_date, (22 - @count)*@rate, 'missing_days', 'finalized', @attendance);
 end
@@ -471,7 +470,6 @@ begin
 end
 go;
 
--- from - to in payroll but no from-to in bonus???
 create proc Add_Payroll
 @employee_id int,
 @from date, @to date
@@ -479,4 +477,24 @@ as
 begin
 declare @bonus int, @deduction int
 
-set @bonus = exec   --?? tf
+end
+
+
+
+
+/*
+Questions:
+	How will the bonus amount be calculated using extra hours or extra days
+
+	Will the deduction be calculated using unfulfilled hours or unfulfilled days? i.e if someone 
+		attended 30 days 7 hours each will they recieve an hourly deduction?
+
+	What is the purpose of from date and to date in payroll? and how will we use other functions
+		since they only operate on the current month
+
+	How will the unpaid leave acceptance be decided?
+
+	Deduction is calculated using the normal rate (no factor), i.e if someone only completed	
+		half their hours they will be deducted half their salary
+
+*/
