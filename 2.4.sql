@@ -84,7 +84,8 @@ begin
 		end_date date,
 		num_days as (DATEDIFF(day, start_date, end_date)+1),
 		final_approval_status varchar(50) DEFAULT 'pending',
-		CHECK (final_approval_status IN ('pending', 'approved', 'rejected'))
+		CHECK (final_approval_status IN ('pending', 'approved', 'rejected')),
+		CHECK (end_date>=start_date)
 	);
 
 	create table Annual_Leave(
@@ -146,10 +147,10 @@ begin
 		constraint Doc_empFK foreign key (emp_ID) references Employee(employee_ID),
 		constraint Doc_medicalFK foreign key (medical_ID) references Medical_Leave(request_ID),
 		constraint Doc_unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
-		CHECK (status IN ('valid', 'expired'))
+		CHECK (status IN ('valid', 'expired')),
+		CHECK (expiry_date>=creation_date)
 	);
 
-	
 	create table Payroll (
 		ID int primary key identity(1,1),
 		payment_date date,
@@ -160,7 +161,8 @@ begin
 		bonus_amount decimal(10,2),
 		deductions_amount decimal(10,2),	
 		emp_ID int, 
-		constraint Pay_empFK foreign key (emp_ID) references Employee(employee_ID)
+		constraint Pay_empFK foreign key (emp_ID) references Employee(employee_ID),
+		CHECK(to_date>=from_date)
 	);
 
 	create table Attendance (
@@ -172,7 +174,8 @@ begin
 		status varchar(50) DEFAULT 'absent', 
 		emp_ID int,
 		constraint Att_empFK foreign key (emp_ID) references Employee(employee_ID),
-		CHECK (status IN ('absent', 'attended'))
+		CHECK (status IN ('absent', 'attended')),
+		CHECK (check_out_time>=check_in_time)
 	);
 
 	create table Deduction (
@@ -219,6 +222,7 @@ begin
 		foreign key (Emp1_ID) references Employee(employee_ID), 
 		foreign key (Leave_ID) references Leave(request_ID) 
 	);
+
 
 end;
 
