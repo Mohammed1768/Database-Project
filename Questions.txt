@@ -1,0 +1,2 @@
+1- when do we do on update cascade/on delete cascade on a FK
+2- will they post a correct erd?
