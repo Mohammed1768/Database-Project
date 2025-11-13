@@ -1,67 +1,61 @@
--- 2.3 a
+USE University_HR_ManagementSystem_Team_12;
 GO
 
+-- 2.3 a)
 CREATE PROC Update_Status_Doc
 AS
-UPDATE Document
-SET status = 'expired'
-WHERE expiry_date < DATE(CURRENT_TIMESTAMP);
-
+    UPDATE Document
+    SET status = 'expired'
+    WHERE expiry_date < CAST(GETDATE() AS DATE);
 GO
--- 2.3 b
+
+-- 2.3 b)
 CREATE PROC Remove_Deductions
 AS
-
-DELETE FROM Deductions
-WHERE EXISTS (SELECT * FROM Employee WHERE Employee.employee_ID = Deductions.emp_id AND Employee.employment_status = 'resigned')
+    DELETE FROM Deduction
+    WHERE EXISTS (SELECT 1 FROM Employee WHERE Employee.employee_ID = Deduction.emp_id AND Employee.employment_status = 'resigned')
 GO
 
+--2.3 c)
 
--- 2.3 d
+-- 2.3 d)
 CREATE PROC Create_Holiday
 AS
-CREATE TABLE Holiday(
-	holiday_id INT IDENTITY,
-	name VARCHAR(50),
-	from_date DATE,
-	to_date DATE,
-	CONSTRAINT holidayPK PRIMARY KEY (holiday_id)
-);
-
+    CREATE TABLE Holiday(
+	    holiday_id INT PRIMARY KEY IDENTITY(1,1),
+	    name VARCHAR(50),
+	    from_date DATE,
+	    to_date DATE,
+	    CHECK (from_date <= to_date)
+    );
 GO
--- 2.3 e
+
+-- 2.3 e)
 CREATE PROC  Add_Holiday
-@holiday_name VARCHAR(50),
-@from_date DATE,
-@to_date DATE
+    @holiday_name VARCHAR(50),
+    @from_date DATE,
+    @to_date DATE
 AS
-INSERT INTO Holiday
-VALUES(@holiday_name, @from_date, @to_date)
-GO
--- 2.3 f
-CREATE PROC Initiate_Attendance
-AS
-
-INSERT INTO Attendance(emp_ID, date)
-SELECT employee_ID, DATE(CURRENT_TIMESTAMP)
-FROM Employee
-WHERE Employee.employment_status = 'active';
-
+    INSERT INTO Holiday (name, from_date, to_date)
+    VALUES(@holiday_name, @from_date, @to_date)
 GO
 
-
--- 2.3 h                            (Fathy's Procedure)
-CREATE PROC Remove_Holiday
-AS
-DELETE FROM Attendance
-WHERE EXISTS (SELECT *
-			FROM Holiday
-			WHERE Attendance.date Between Holiday.from_date AND Holiday.to_Date)
+-- 2.3 f)
+CREATE PROC Initiate_Attendance 
+AS 
+    INSERT INTO Attendance(emp_ID, date) 
+    SELECT E.employee_ID, CAST(GETDATE() AS DATE) 
+    FROM Employee E 
+    WHERE E.employment_status = 'active' 
+        AND NOT EXISTS ( 
+            SELECT 1 
+            FROM Attendance A 
+            WHERE A.emp_ID = E.employee_ID AND A.date = CAST(GETDATE() AS DATE) 
+        ); 
 GO
 
-    
---2.3 h)                            (Kerdany's Procedure)
-CREATE PROCEDURE update_attendance
+--2.3 g)
+CREATE PROCEDURE Update_Attendance
     @employee_id INT,
     @check_in_time TIME,
     @check_out_time TIME
@@ -69,12 +63,22 @@ AS
     UPDATE Attendance 
     SET check_in_time = @check_in_time,
         check_out_time = @check_out_time,
-        total_duration = CAST(DATEADD(SECOND, DATEDIFF(SECOND, @check_in_time, @check_out_time), 0) AS TIME),
-        status = CASE WHEN @check_in_time IS NOT NULL AND @check_out_time IS NOT NULL THEN 'attended' ELSE 'absent' END
-    WHERE emp_ID = @employee_id 
-      AND date = CAST(GETDATE() AS DATE);
+        status = CASE WHEN (@check_in_time IS NOT NULL) AND (@check_out_time IS NOT NULL) THEN 'attended' ELSE 'absent' END
+    WHERE emp_ID = @employee_id AND date = CAST(GETDATE() AS DATE);
 GO
 
+-- 2.3 h)
+CREATE PROC Remove_Holiday
+AS
+    DELETE FROM Attendance
+    WHERE EXISTS (
+        SELECT 1
+	    FROM Holiday
+        WHERE Attendance.date Between Holiday.from_date AND Holiday.to_Date
+    );
+GO
+
+-------------------------(Unchecked yet)---------------------------------------------
 -- 2.3 i)
 CREATE PROCEDURE Remove_DayOff
     @Employee_ID INT
