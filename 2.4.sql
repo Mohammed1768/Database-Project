@@ -149,6 +149,7 @@ begin
 		CHECK (status IN ('valid', 'expired'))
 	);
 
+	
 	create table Payroll (
 		ID int primary key identity(1,1),
 		payment_date date,
@@ -339,42 +340,63 @@ else
 	 set @status = 0;
 
 update Employee_Approve_Leave
-set status = case when
-    @status = 1 then 'approved' 
-    else 'rejected' 
+set status = case 
+    when @status = 1 then 'approved'
+    else 'rejected'
 end
 where Emp1_ID = @HR_ID and Leave_ID = @request_ID;
 
-go;
+update Leave
+set final_approval_status = case 
+    when @status = 1 then 'approved'
+    else 'rejected'
+end
+where request_ID = @request_ID;
 
 
-/* 
-Unpaid leave can be requested when an employee has no annual leave balance remaining. The
-request must include a memo document, and it requires approval from a higher-ranking
-employee, the Upper Board department, and the HR representative as in section 2, . The
-maximum number of unpaid leave days allowed is 30.
-*/
-create proc HR_approval_unpaid 
-@request_ID int, @HR_ID int
-as 
-begin
-	create table a7a(id int);	-- to be removed
 end
 go;
 
-/*
-Compensation leave is granted when an employee works on their official day off. In return, the
-employee is allowed to take another working day off within the same month. The request must
-include the reason and the date of the original extra workday.
-Compensations are approved by the employee’s HR representative.
-When an employee applies for a compensation leave, another employee must replace them.
-*/
-create proc HR_approval_comp 
-@request_ID int, @HR_ID int
+
+
+create proc HR_approval_unpaid 
+@request_ID int, @HR_ID int, @status bit
 as 
 begin
-declare @status bit
-	create table a7a(id int);	-- to be removed
+	update Employee_Approve_Leave
+	set status = case 
+		when @status = 1 then 'approved'
+		else 'rejected'
+	end
+	where Emp1_ID = @HR_ID and Leave_ID = @request_ID;
+
+	update Leave
+	set final_approval_status = case 
+		when @status = 1 then 'approved'
+		else 'rejected'
+	end
+	where request_ID = @request_ID;
+end
+go;
+
+
+create proc HR_approval_comp 
+@request_ID int, @HR_ID int, @status bit
+as 
+begin
+	update Employee_Approve_Leave
+	set status = case 
+		when @status = 1 then 'approved'
+		else 'rejected'
+	end
+	where Emp1_ID = @HR_ID and Leave_ID = @request_ID;
+
+	update Leave
+	set final_approval_status = case 
+		when @status = 1 then 'approved'
+		else 'rejected'
+	end
+	where request_ID = @request_ID;
 end
 go;
 
@@ -388,25 +410,27 @@ begin
 		select top 1 salary from Employee where @employee_ID = @employee_ID
 	);
 	set @sum = (
-		select sum(8 - total_duration) from Attendance a
-		where total_duration < 8 and
+		select sum(total_duration) from Attendance a 
+		where
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	);
 	set @attendance = (
 		select top 1 attendance_ID from Attendance a
 		where total_duration < 8 and 
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
+		order by total_duration asc
 	);
 	set @first_date = (
 		select top 1 date from Attendance a
 		where attendance_ID = @attendance
+		order by total_duration asc
 	);
 
-	if (@sum = 0) begin return end;
+	if (@sum = 0 or @sum>=176)  return;
 
-	--  	(deduction_ID, emp_ID, date, amount, type, status, attendance_ID)
+	--  			     (emp_ID, date, amount, type, status, attendance_ID)
 	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
-		values(@employee_ID, @first_date, @sum*@rate, 'missing_hours', 'finalized', @attendance);
+		values(@employee_ID, @first_date, (176 - @sum)*@rate, 'missing_hours', 'finalized', @attendance);
 end
 go;
 
@@ -415,7 +439,7 @@ create proc Deduction_days
 @employee_ID int
 as 
 begin
-	declare @count int, @rate decimal(10,2), @attendance int, @first_date date
+	declare @count int, @rate decimal(10,2), @first_date date
 
 	set @rate = (
 		select top 1 salary from Employee where @employee_ID = @employee_ID
@@ -425,20 +449,11 @@ begin
 		where 
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	);
-	set @attendance = (
-		select top 1 attendance_ID from Attendance a
-		where total_duration < 8 and 
-		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
-	);
-	set @first_date = (
-		select top 1 date from Attendance a
-		where attendance_ID = @attendance
-	);
 
-	if (@count >= 22) begin return end;
+	if (@count >= 22) return;
 
-	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
-		values(@employee_ID, @first_date, (22 - @count)*@rate, 'missing_days', 'finalized', @attendance);
+	insert into Deduction(emp_ID, amount, type, status) 
+		values(@employee_ID, (22 - @count)*@rate*8, 'missing_days', 'finalized');
 end
 go;
 
@@ -502,25 +517,16 @@ create proc Add_Payroll
 @from date, @to date
 as 
 begin
-declare @bonus int, @deduction int
+declare @bonus int, @deduction_amount int, @rate int
+
+set @bonus = dbo.Bonus_amount(@employee_id)	
+set @deduction_amount = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
+set @rate = (select top 1 salary from Employee where @employee_ID = @employee_ID);
+
+-- payment_date, final_salary_amount, from_date, to_date, comments, bonus_amount, deduction_amount, emp_ID
+insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus_amount, deductions_amount, emp_ID) 
+			values(getdate(), 22*8*@rate + @bonus - @deduction_amount, @from, @to, @bonus, @deduction_amount, @employee_id);
 
 end
 
 
-
-/*
-Questions:
-	How will the bonus amount be calculated using extra hours or extra days
-	
-	Will the deduction be calculated using unfulfilled hours or unfulfilled days? i.e if someone 
-		attended 30 days 7 hours each will they recieve an hourly deduction?
-
-	What is the purpose of from date and to date in payroll? and how will we use other functions
-		since they only operate on the current month
-
-	How will the unpaid leave acceptance be decided?
-
-	Deduction is calculated using the normal rate (no factor), i.e if someone only completed	
-		half their hours they will be deducted half their salary
-
-*/
