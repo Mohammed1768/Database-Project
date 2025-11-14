@@ -38,7 +38,7 @@ set @accidental_balance = (
 	where a.request_ID = @request_ID
 );
 
-if (@accidental_balance>0 or @annual_balance>0)
+if (@accidental_balance>0 or @annual_balance>0) -- to be changed (too lazy to fix right now)
 	 set @status = 1;
 else
 	 set @status = 0;
@@ -64,7 +64,7 @@ go;
 
 
 create proc HR_approval_unpaid 
-@request_ID int, @HR_ID int, @status bit
+@request_ID int, @HR_ID int, @status bit	-- extra parameter 'status' should be passed to the proc
 as 
 begin
 	update Employee_Approve_Leave
@@ -84,8 +84,8 @@ end
 go;
 
 
-create proc HR_approval_comp 
-@request_ID int, @HR_ID int, @status bit
+create proc HR_approval_comp 	
+@request_ID int, @HR_ID int, @status bit	-- extra parameter 'status' should be passed to the proc
 as 
 begin
 	update Employee_Approve_Leave
