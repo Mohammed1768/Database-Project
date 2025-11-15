@@ -78,7 +78,6 @@ AS
     );
 GO
 
--------------------------(Unchecked yet)---------------------------------------------
 -- 2.3 i)
 CREATE PROCEDURE Remove_DayOff
     @Employee_ID INT
@@ -97,7 +96,7 @@ BEGIN
       AND MONTH(date) = MONTH(GETDATE())
       AND YEAR(date) = YEAR(GETDATE());
 END;
-GO  
+GO
 
 -- 2.3 j) 
 CREATE PROCEDURE remove_approved_leaves
@@ -110,6 +109,7 @@ BEGIN
           SELECT 1
           FROM Leave L
           WHERE L.final_approval_status = 'approved'
+           AND Attendance.date BETWEEN L.start_date AND L.end_date
             AND L.request_ID IN (
                 SELECT request_ID FROM Annual_Leave WHERE emp_ID = @employee_id
                 UNION
@@ -121,7 +121,6 @@ BEGIN
                 UNION
                 SELECT request_ID FROM Compensation_Leave WHERE emp_ID = @employee_id
             )
-            AND Attendance.date BETWEEN L.start_date AND L.end_date
       );
 END;
 GO
@@ -133,8 +132,6 @@ CREATE PROCEDURE Replace_employee
     @from_date DATE,
     @to_date DATE
 AS
-BEGIN
     INSERT INTO Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date)
     VALUES (@Emp1_ID, @Emp2_ID, @from_date, @to_date);
-END;
 GO
