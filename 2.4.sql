@@ -163,11 +163,13 @@ begin
 end
 go;
 
+
 create proc Deduction_unpaid	
 @employee_ID int
 as 
 begin
-	
+	create table very_cool_tmp_table_67(start_date date, end_date date, duration int);
+	insert into very_cool_tmp_table_67()
 
 end
 go;
