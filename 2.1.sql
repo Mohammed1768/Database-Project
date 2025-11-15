@@ -51,7 +51,6 @@ begin
 		constraint Phone_empFK foreign key (emp_ID) references Employee(employee_ID)
 	);
 
-
 	create table Role (
 		role_name varchar(50) primary key, 
 		title varchar(50), 
