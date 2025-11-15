@@ -43,7 +43,8 @@ Begin
 		dept_name varchar (50), 
 		constraint Emp_deptFK foreign key (dept_name) references Department(name),
 		CHECK (type_of_contract IN ('full_time', 'part_time')),
-		CHECK (employment_status IN ('active', 'onleave', 'notice_period','resigned'))
+		CHECK (employment_status IN ('active', 'onleave', 'notice_period','resigned')),
+		CHECK (hire_date<=last_working_date)
 	);
 
 	create table Employee_Phone (
