@@ -23,25 +23,25 @@ end;
 go;
 
 
+-- 2.4 b)
 create proc HR_approval_an_acc 
 @request_ID int, @HR_ID int
 as 
 begin
 declare @status bit
-declare @annual_balance int
-declare @accidental_balance int
 
-set @annual_balance = 0
-set @accidental_balance = 0
-
-set @annual_balance = (
+declare @annual_balance int = (
 	select top 1 annual_balance from Employee e inner join Annual_Leave a on (e.employee_ID = a.emp_ID)
 	where a.request_ID = @request_ID
 );
-set @accidental_balance = (
+
+declare @accidental_balance int = (
 	select top 1 accidental_balance from Employee e inner join Accidental_Leave a on (e.employee_ID = a.emp_ID)
 	where a.request_ID = @request_ID
 );
+if (@annual_balance is null) set @annual_balance = 0;
+if (@accidental_balance is null) set @accidental_balance = 0;
+
 
 if (@accidental_balance>0 or @annual_balance>0)
 	 set @status = 1;
@@ -68,6 +68,7 @@ go;
 
 
 
+-- 2.4 c)
 create proc HR_approval_unpaid 
 @request_ID int, @HR_ID int, @status bit	-- extra parameter 'status' should be passed to the proc
 as 
@@ -89,10 +90,14 @@ end
 go;
 
 
+-- 2.4 d)
 create proc HR_approval_comp 	
-@request_ID int, @HR_ID int, @status bit	-- extra parameter 'status' should be passed to the proc
+@request_ID int, @HR_ID int
 as 
 begin
+	@declare 
+	
+
 	update Employee_Approve_Leave
 	set status = case 
 		when @status = 1 then 'approved'
@@ -109,15 +114,24 @@ begin
 end
 go;
 
+
+-- 2.4 e)
 create proc Deduction_hours	
 @employee_ID int
 as 
 begin
 	declare @hours int, @rate decimal(10,2), @attendance int
 
-	set @rate = (select top 1 salary from Employee 				-- hourly rate = salary / (22 days * 8 hours)
-		where @employee_ID = @employee_ID) / (22 * 8);		
+	-- base salary hourly rate = salary / (22 days * 8 hours)
+	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
+		where e.employee_ID = @employee_ID) / (22 * 8);		
+	
+	declare @years int = (select top 1 e.years_of_experience from Employee e 
+		where e.employee_ID = @employee_ID);
 
+
+	set @rate = @base_salary * (1 +  @years * 0.01);
+		
 	set @hours = (
 		select sum(total_duration) from Attendance a 
 		where
@@ -132,7 +146,7 @@ begin
 	);
 
 	
-	if (@hours = 0 or @hours >= (22 * 8))  return;
+	if (@hours >= (22 * 8))  return;				-- if employee has attended over the 22 * 8 hours
 
 	--  			     (emp_ID, date, amount, type, status, attendance_ID)
 	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
@@ -141,29 +155,59 @@ end
 go;
 
 
+-- 2.4 f)
 create proc Deduction_days	
 @employee_ID int
 as 
 begin
-	declare @count int, @rate decimal(10,2), @first_date date
 
-	set @rate = (select top 1 salary from Employee 				-- daily rate = salary / 22 days
-		where @employee_ID = @employee_ID) / 22;	
+	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
+		where e.employee_ID = @employee_ID) / 22;		
+	
+	declare @years int = (select top 1 e.years_of_experience from Employee e 
+		where e.employee_ID = @employee_ID);
 
-	set @count = (
-		select count(a.attendance_ID) from Attendance a
-		where 
-		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
-	);
 
-	if (@count >= 22) return;
+	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	
+	declare @end_date date = eomonth(getdate());
 
-	insert into Deduction(emp_ID, date, amount, type, status) 
-		values(@employee_ID, getdate(), (22 - @count)*@rate, 'missing_days', 'finalized');
+	-- delete all previously added deductions from the current month
+	delete from Deduction where
+		 type = 'missing_days' and @employee_ID = emp_ID and 
+		 month(date)=month(getdate()) and year(date)=year(getdate());
+
+	-- create instance table dates
+	create table #dates(days int);
+	insert into #dates values
+		(1), (2), (3), (4), (5), (6), (7),
+		(8), (9), (10), (11), (12), (13), (14),
+		(15), (16), (17), (18), (19), (20), (21),
+		(22), (23), (24), (25), (26), (27), (28),
+		(29), (30), (31);
+
+	-- delete the days over the limit of the current month
+	delete from #dates
+		where #dates.days > day(@end_date); 
+
+	-- delete the days where the employee has attended
+	delete from #dates
+	where #dates.days in
+		(select day(date) from Attendance a where a.emp_ID = @employee_ID and 
+			month(a.date)=month(getdate()) and year(a.date)=year(getdate()));
+
+	-- insert the remaining dates from the 'dates' table into the Deduction
+
+		-- Deduction(emp_ID, date, amount, type, status, unpaid_ID, attendance_ID)
+	insert into Deduction(emp_ID, date, amount, type, status)
+		select @employee_ID, datefromparts(year(getdate()), month(getdate()), #dates.days), 
+			@daily_rate, 'missing_days', 'finalized' 
+		from #dates; 
+
 end
 go;
 
-
+-- 2.4 g)
 create proc Deduction_unpaid	
 @employee_ID int
 as 
@@ -172,31 +216,37 @@ begin
     declare @CurrentMonthEnd   date = eomonth(getdate());
 
 
-	create table very_cool_tmp_table_67(start_date date, end_date date, duration int);
+	create table #very_cool_tmp_table_67(start_date date, end_date date, duration int);
 
 	-- all the leaves that overlap with the current month
-	insert into very_cool_tmp_table_67 (start_date, end_date)
+	insert into #very_cool_tmp_table_67 (start_date, end_date)
 	select l.start_date, l.end_date from 
 	Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID) WHERE 
 		l.start_date <= @CurrentMonthEnd and l.end_date >= @CurrentMonthStart
 		and @employee_ID = u.Emp_ID;
 
-	update very_cool_tmp_table_67
+	update #very_cool_tmp_table_67
 		set start_date = @CurrentMonthStart 
 		where start_date < @CurrentMonthStart;
 
-	update very_cool_tmp_table_67
+	update #very_cool_tmp_table_67
 		set end_date = @CurrentMonthEnd 
 		where end_date > @CurrentMonthEnd;
 
-	update very_cool_tmp_table_67
+	update #very_cool_tmp_table_67
 		set duration = end_date - start_date;
 		
 	
-	declare @daily_rate int =  (select top 1 salary from Employee 				-- daily rate = salary / 22 days
-								where @employee_ID = @employee_ID) / 22 ;	
+	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
+		where e.employee_ID = @employee_ID) / 22;		
+	
+	declare @years int = (select top 1 e.years_of_experience from Employee e 
+		where e.employee_ID = @employee_ID);
 
-	declare @count int = (select sum(duration) from very_cool_tmp_table_67);
+	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+
+
+	declare @count int = (select sum(duration) from #very_cool_tmp_table_67);
 
 	insert into Deduction(emp_ID, date, amount, type, status, unpaid_ID) 
 		values(@employee_ID, getdate(), @daily_rate * @count, 'unpaid', 'finalized');
@@ -205,10 +255,10 @@ begin
 end
 go;
 
+-- 2.4 h)
 create function Bonus_amount(@employee_id int)
 returns int as 
 begin
-	 declare @bonus int;
 
 	declare @count int = (
 		select sum(total_duration) from Attendance a
@@ -216,14 +266,20 @@ begin
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	);
 
-	declare @rate int = (select top 1 salary from Employee e			-- hourly rate
-						  where @employee_id = e.employee_ID) / (22 * 8);
+	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
+		where e.employee_ID = @employee_ID) / (22 * 8);		
+	
+	declare @years int = (select top 1 e.years_of_experience from Employee e 
+		where e.employee_ID = @employee_ID);
+
+	declare @rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
 
 	declare @factor int = 
-			(select max(r.percentage_overtime) from Role r, Employee e, Employee_Role er where	
-			@employee_id = e.employee_ID and @employee_id=er.emp_ID and r.role_name=er.role_name);
+			(select top 1 r.percentage_overtime from Role r, Employee e, Employee_Role er where	
+			@employee_id = e.employee_ID and @employee_id=er.emp_ID and r.role_name=er.role_name
+			order by r.rank desc);
 
-	set @bonus = (@count - 22*8) * @rate * @factor * 0.01;
+	declare @bonus int = (@count - 22*8) * @rate * @factor * 0.01;
 	if (@bonus <= 0) return 0;
 	return @bonus;
 
@@ -231,10 +287,14 @@ end
 go;
 
 
--- we are going to assume that the from and to date are the first and last date of the current month 
--- this is assumed so that the function call to the bonus method is correct
--- may be changed later
 
+-- 2.4 i)
+
+/* 
+* we are going to assume that the from and to date are the first and last date of the current month 
+*  this is assumed so that the function call to the bonus method is correct
+*  may be changed later 
+*/
 create proc Add_Payroll
 @employee_id int,
 @from date, @to date	
@@ -243,7 +303,9 @@ begin
 
 declare @bonus int = dbo.Bonus_amount(@employee_id)	
 declare @deduction_amount int = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
-declare @salary int = (select top 1 salary from Employee where @employee_ID = @employee_ID);
+declare @base_salary decimal(10,2)= (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
+declare @years int = (select top 1 e.years_of_experience from Employee e where e.employee_ID = @employee_ID);
+declare @salary decimal(10,2) = @base_salary * (1 + @years * 0.01);
 
 -- payment_date, final_salary_amount, from_date, to_date, comments, bonus_amount, deduction_amount, emp_ID
 insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus_amount, deductions_amount, emp_ID) 
@@ -252,3 +314,24 @@ insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus
 end
 
 
+/* 
+
+- DeductionDay is it one deduction for all days or one for every day
+
+- what is the dates in DeductionDay, DeductionLeave, and deduction Hours
+
+- Employee will have DeductionDay until he attends the day.
+	i.e if today's date is 17/4, do we add a deduction for dates yet to come?
+- status parameter in HR_approval_unpaid
+
+- formula for salary? is it years_of_experience squared
+
+- How do we handle the case that for example the president needs to approve the request?  
+	is the HR_ID in the procedure going to be the id of the president?
+	if the HR representative is processing the request before the president? does he reject it or pass it
+
+- if the Dean wants a compensation leave? does he also require approval from the president? or just check if he attended during his holiday?
+
+- what decides whether an unpaid leave request is accepted or rejected
+
+*/

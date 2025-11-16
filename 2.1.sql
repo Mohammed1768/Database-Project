@@ -40,6 +40,8 @@ create table Employee(
 	last_working_date date, 
 	dept_name varchar (50), 
 	constraint Emp_deptFK foreign key (dept_name) references Department(name),
+	CHECK (annual_balance>=0),
+	CHECK (accidental_balance>=0),
 	CHECK (type_of_contract IN ('full_time', 'part_time')),
 	CHECK (employment_status IN ('active', 'onleave', 'notice_period','resigned')),
 	CHECK (hire_date<=last_working_date)
