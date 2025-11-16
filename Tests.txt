@@ -112,7 +112,11 @@ VALUES('Vice Dean', 'Prof. Dr. Eng.', 'university department vice dean',
 4, 500000.00, 20.00, 30.00, 30, 25);
 
 INSERT INTO ROLE
-VALUES('HR Representative', 'Dr.', 'university HR representative',
+VALUES('HR_Representative_MET', 'Dr.', 'university HR representative',
+4, 250000.00, 15.00, 25.00, 30, 25);
+
+INSERT INTO ROLE
+VALUES('HR_Representative_IET', 'Dr.', 'university HR representative',
 4, 250000.00, 15.00, 25.00, 30, 25);
 
 INSERT INTO ROLE
@@ -124,7 +128,7 @@ VALUES('Teaching Assistant', 'Dr.', 'Course Teaching Assistant',
 6, 2500.00, 10.00, 20.00, 30, 25);
 
 INSERT INTO ROLE(role_name, title, description, base_salary, 
-persentage_YOE, percentage_overtime, annual_balance, accidental_balance)
+percentage_YOE, percentage_overtime, annual_balance, accidental_balance)
 VALUES('Medical Doctor', 'Dr.', 'Course Teaching Assistant', 
 2500.00, 10.00, 20.00, 30, 25);
 
@@ -155,7 +159,7 @@ INSERT INTO Employee_Role
 VALUES(6, 'Medical Doctor');
 
 INSERT INTO Employee_Role
-VALUES(7, 'HR Representative');
+VALUES(7, 'HR_Representative_MET');
 
 INSERT INTO Employee_Role
 VALUES(8, 'Teaching Assistant');
@@ -199,21 +203,24 @@ INSERT INTO Role_existsIn_Department
 VALUES('HR Manager', 'HR Department');
 
 INSERT INTO Role_existsIn_Department
-VALUES('HR Representative', 'HR Department');
+VALUES('HR_Representative_MET', 'HR Department');
+
+INSERT INTO Role_existsIn_Department
+VALUES('HR_Representative_IET', 'HR Department');
 
 INSERT INTO Role_existsIn_Department
 VALUES('Medical Doctor','Medical Department');
 
 --------
 
-INSERT INTO Leave(date_of_request, start_date, end_date)
-VALUES('12/10/2025', '17/11/2025', '20/11/2025');
+INSERT INTO Leave(date_of_request, start_date, end_date, final_approval_status)
+VALUES('12/10/2025', '17/11/2025', '20/11/2025', 'approved');
 
 INSERT INTO Medical_leave
 VALUES(1, 1, 'employee1 medical dissability', 'sick', 1);
 
-INSERT INTO Leave(date_of_request, start_date, end_date)
-VALUES('12/11/2025', '14/11/2025', '20/11/2025');
+INSERT INTO Leave(date_of_request, start_date, end_date, final_approval_status)
+VALUES('12/11/2025', '14/11/2025', '20/11/2025', 'approved');
 
 INSERT INTO Unpaid_Leave
 VALUES(2, 2);
@@ -227,3 +234,34 @@ VALUES('medical', 'medical desc', 'employee 1 medical document',
 INSERT INTO Document
 VALUES('memo', 'memo document', 'employee 2 memo document',
 '15/9/2025', '15/12/2025', 'valid', 1, null, 2);
+
+---------
+
+--absent employees on 15/11/2025
+
+INSERT INTO Attendence(date, emp_id)
+VALUES('15/11/2025', 1);
+
+INSERT INTO Attendence(date, emp_id)
+VALUES('15/11/2025', 2);
+
+INSERT INTO Attendence(date, emp_id)
+VALUES('15/11/2025', 3);
+
+INSERT INTO Attendence(date, emp_id)
+VALUES('15/11/2025', 4);
+
+INSERT INTO Attendence(date, emp_id)
+VALUES('15/11/2025', 8);
+
+--attended employees on 15/11/2025
+
+INSERT INTO Attendence(date, check_in_time, check_out_time,status, emp_id)
+VALUES('15/11/2025', '08:20:00', '17:30:00', 'attended', 5);
+
+INSERT INTO Attendence(date, check_in_time, check_out_time,status, emp_id)
+VALUES('15/11/2025', '09:15:00', '18:50:00', 'attended', 6);
+
+INSERT INTO Attendence(date, check_in_time, check_out_time,status, emp_id)
+VALUES('15/11/2025', '07:15:00', '14:00:00', 'attended', 7);
+
