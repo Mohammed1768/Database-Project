@@ -338,4 +338,7 @@ end
 - is friday also considered a day off?
 
 - what does he mean by valid reason in compensation leave approval
+
+- in deduction unpaid do if there's an overlapping, do we add a record for the next month
+	or do we wait for the next month to come?
 */
