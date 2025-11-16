@@ -99,7 +99,21 @@ create proc HR_approval_comp
 @request_ID int, @HR_ID int
 as 
 begin
-	@declare 
+	
+	declare @emp_id int =	(select top 1 e.employee_ID from Employee e 
+							inner join Compensation_Leave c on (c.emp_ID = e.employee_ID)
+							where c.request_ID = @request_ID);
+
+
+	declare @day_off varchar(50) = (select top 1 e.official_day_off from Employee e where e.employee_ID = @emp_id); 
+
+	declare @status bit = case when exists(
+		select * from Attendance a where a.emp_ID=@emp_id
+		and a.status='attended' and 
+		datename(WEEKDAY, a.date) = @day_off 
+		and month(a.date) = month(getdate()) and a.total_duration >= 8
+	) then 1 else 0 end; 
+
 	
 
 	update Employee_Approve_Leave
@@ -174,39 +188,19 @@ begin
 
 	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
 	
-	declare @end_date date = eomonth(getdate());
-
 	-- delete all previously added deductions from the current month
 	delete from Deduction where
 		 type = 'missing_days' and @employee_ID = emp_ID and 
 		 month(date)=month(getdate()) and year(date)=year(getdate());
 
-	-- create instance table dates
-	create table #dates(days int);
-	insert into #dates values
-		(1), (2), (3), (4), (5), (6), (7),
-		(8), (9), (10), (11), (12), (13), (14),
-		(15), (16), (17), (18), (19), (20), (21),
-		(22), (23), (24), (25), (26), (27), (28),
-		(29), (30), (31);
-
-	-- delete the days over the limit of the current month
-	delete from #dates
-		where #dates.days > day(@end_date); 
-
-	-- delete the days where the employee has attended
-	delete from #dates
-	where #dates.days in
-		(select day(date) from Attendance a where a.emp_ID = @employee_ID and 
-			month(a.date)=month(getdate()) and year(a.date)=year(getdate()));
-
-	-- insert the remaining dates from the 'dates' table into the Deduction
 
 		-- Deduction(emp_ID, date, amount, type, status, unpaid_ID, attendance_ID)
 	insert into Deduction(emp_ID, date, amount, type, status)
-		select @employee_ID, datefromparts(year(getdate()), month(getdate()), #dates.days), 
+		select @employee_ID, datefromparts(year(getdate()), month(getdate()), a.date), 
 			@daily_rate, 'missing_days', 'finalized' 
-		from #dates; 
+		from Attendance a
+		where month(a.date) = month(getdate()) and year(a.date)=year(getdate())
+			and a.status = 'absent' and a.emp_ID = @employee_ID; 
 
 end
 go;
@@ -337,9 +331,11 @@ end
 
 - if the Dean wants a compensation leave? does he also require approval from the president? or just check if he attended during his holiday?
 	same in accidental leave
+	what is the purpose of HR_id in compensation leave request if its done systematically anyways
 
 - what decides whether an unpaid leave request is accepted or rejected
 
 - is friday also considered a day off?
 
+- what does he mean by valid reason in compensation leave approval
 */
