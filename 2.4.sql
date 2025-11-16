@@ -39,6 +39,10 @@ declare @accidental_balance int = (
 	select top 1 accidental_balance from Employee e inner join Accidental_Leave a on (e.employee_ID = a.emp_ID)
 	where a.request_ID = @request_ID
 );
+
+-- request does not exist in the table
+if (@annual_balance is null and @accidental_balance is null) return;
+
 if (@annual_balance is null) set @annual_balance = 0;
 if (@accidental_balance is null) set @accidental_balance = 0;
 
@@ -303,6 +307,7 @@ begin
 
 declare @bonus int = dbo.Bonus_amount(@employee_id)	
 declare @deduction_amount int = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
+
 declare @base_salary decimal(10,2)= (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
 declare @years int = (select top 1 e.years_of_experience from Employee e where e.employee_ID = @employee_ID);
 declare @salary decimal(10,2) = @base_salary * (1 + @years * 0.01);
@@ -331,7 +336,10 @@ end
 	if the HR representative is processing the request before the president? does he reject it or pass it
 
 - if the Dean wants a compensation leave? does he also require approval from the president? or just check if he attended during his holiday?
+	same in accidental leave
 
 - what decides whether an unpaid leave request is accepted or rejected
+
+- is friday also considered a day off?
 
 */
