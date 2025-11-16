@@ -341,4 +341,9 @@ end
 
 - in deduction unpaid do if there's an overlapping, do we add a record for the next month
 	or do we wait for the next month to come?
+
+	- how will the Attendance records be added in the attendance table
+	is at the beginning of every month an attendance is added for the entire month
+	or are they added per day? 
+	cause these could cause issues in calculating the deduction
 */
