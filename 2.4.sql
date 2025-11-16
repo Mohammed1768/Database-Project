@@ -275,7 +275,7 @@ begin
 	declare @factor int = 
 			(select top 1 r.percentage_overtime from Role r, Employee e, Employee_Role er where	
 			@employee_id = e.employee_ID and @employee_id=er.emp_ID and r.role_name=er.role_name
-			order by r.rank desc);
+			order by r.rank asc);
 
 	declare @bonus int = (@count - 22*8) * @rate * @factor * 0.01;
 	if (@bonus <= 0) return 0;
