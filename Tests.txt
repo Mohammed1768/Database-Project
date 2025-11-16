@@ -1,0 +1,229 @@
+
+INSERT INTO Department
+VALUES('MET', 'C');
+
+INSERT INTO Department
+VALUES('IET', 'D');
+
+INSERT INTO Department
+VALUES('HR Department', 'B');
+
+INSERT INTO Department
+VALUES('Medical Department', 'B');
+
+INSERT INTO Department
+VALUES('Upper Board', 'N')
+
+----------
+
+INSERT INTO Employee
+VALUES('Ahmed', 'Hesham', 'ahmed@123.com', '123456', 'egypt cairo', 'M', 'saturday', 5,
+'1234567890123456','active', 'full_time', 'hesham', '122345678911', 10, 20, 50000.12,
+'3/3/2005', '16/11/2025','MET');
+
+INSERT INTO Employee
+VALUES('Ahmed', 'Fathy', 'afh@321.com', '17856', 'egypt obour', 'M', 'sunday', 15,
+'1234561234123456','onleave', 'full_time', 'mohamed', '122345678911', 10, 20, 2000.12,
+'3/3/2009', '16/11/2025','IET');
+
+INSERT INTO Employee
+VALUES('Follan', '3ellan', 'foll@321.com', '111111', 'egypt new cairo', 'M', 'friday', 30,
+'1234561447390456','resigned', 'full_time', 'hamoksha', '16678678911', 50, 60, 1000000.00,
+'3/10/2002', '16/11/2025','HR Department');
+
+INSERT INTO Employee
+VALUES('mohamed', 'abdelfattah', 'mohamed.abdelfattah@321.com', '122111', 'egypt new cairo', 'M', 'friday', 50,
+'1234561447391230','notice_period', 'full_time', 'hamoksha', '16678678911', 50, 60, 1000000.00,
+'3/11/1980', '16/11/2025','MET');
+
+INSERT INTO Employee
+VALUES('Mervat', 'Mohamed', 'mervat@123.com', '654321', 'egypt maadi', 'F', 'saturday', 50,
+'2234767899123457','active', 'part_time', 'Mohamed', '133345678911', 25, 31, 5000000.55,
+'7/5/1977', '16/11/2025','MET');
+
+INSERT INTO Employee
+VALUES('Hesham', 'Ahmed', 'haf@321.com', '85617', 'egypt obour', 'M', 'thursday', 25,
+'2345161623412345','onleave', 'part_time', 'ahmed', '129123456781', 45, 12, 2000.00,
+'5/11/2002', '16/11/2025','Medical Department');
+
+INSERT INTO Employee
+VALUES('3ellan', 'Follan', 'llfo@321.com', '1@4x221', 'egypt new cairo', 'M', 'wednesday', 11,
+'1456231739044456','resigned', 'part_time', 'hamoksha', '16789678611', 44, 2, 1000.00,
+'3/10/2002', '16/11/2025','HR Department');
+
+INSERT INTO Employee
+VALUES('mohamed', 'abdelrahman', 'mohamed.abdelrahman@1289.com', '123121', 'egypt cairo', 'M', 'tuesday', 33,
+'4234956173140456','notice_period', 'part_time', 'ahmed', '78166117869', 3, 5, 100.00,
+'7/11/1999', '16/11/2025','IET');
+
+INSERT INTO Employee
+VALUES('yasser', 'mohamed', 'yasser.m@1289.com', '1212321', 'egypt new cairo', 'M', 'monday', 35,
+'3424956114073456','active', 'full_time', 'mohamed', '61178167869', 40, 20, 100000000.00,
+'7/11/1960', '16/11/2025','Upper Board');
+
+----------
+
+INSERT INTO Employee_Phone
+VALUES(1, '01234567890');
+
+INSERT INTO Employee_Phone
+VALUES(2, '08901234567');
+
+INSERT INTO Employee_Phone
+VALUES(3, '07891234560');
+
+INSERT INTO Employee_Phone
+VALUES(4, '04561237890');
+
+INSERT INTO Employee_Phone
+VALUES(5, '02341567890');
+
+INSERT INTO Employee_Phone
+VALUES(6, '06781234590');
+
+INSERT INTO Employee_Phone
+VALUES(7, '01782345690');
+
+INSERT INTO Employee_Phone
+VALUES(8, '01452367890');
+
+INSERT INTO Employee_Phone
+VALUES(9, '01738452690');
+-----------
+
+INSERT INTO ROLE
+VALUES('President', 'Prof. Dr. Eng.', 'university president',
+1, 10000000.00, 50.25, 20.00, 50, 25);
+
+INSERT INTO ROLE
+VALUES('Vice President', 'Prof. Dr. Eng.', 'university vice president',
+2, 1000000.00, 40.50, 15.00, 30, 20);
+
+INSERT INTO ROLE
+VALUES('Dean', 'Prof. Dr. Eng.', 'university department dean',
+3, 100000.00, 50.25, 20.00, 20, 25);
+
+INSERT INTO ROLE
+VALUES('HR Manager', 'Dr.', 'university HR Manager',
+3, 500000.00, 20.00, 30.00, 30, 25);
+
+INSERT INTO ROLE
+VALUES('Vice Dean', 'Prof. Dr. Eng.', 'university department vice dean',
+4, 500000.00, 20.00, 30.00, 30, 25);
+
+INSERT INTO ROLE
+VALUES('HR Representative', 'Dr.', 'university HR representative',
+4, 250000.00, 15.00, 25.00, 30, 25);
+
+INSERT INTO ROLE
+VALUES('Lecturer', 'Prof. Dr.', 'Course Professor',
+5, 250000.00, 15.00, 30.00, 30, 25);
+
+INSERT INTO ROLE
+VALUES('Teaching Assistant', 'Dr.', 'Course Teaching Assistant',
+6, 2500.00, 10.00, 20.00, 30, 25);
+
+INSERT INTO ROLE(role_name, title, description, base_salary, 
+persentage_YOE, percentage_overtime, annual_balance, accidental_balance)
+VALUES('Medical Doctor', 'Dr.', 'Course Teaching Assistant', 
+2500.00, 10.00, 20.00, 30, 25);
+
+---------
+
+INSERT INTO Employee_Role
+VALUES(1, 'Teaching Assistant');
+
+INSERT INTO Employee_Role
+VALUES(2, 'Lecturer');
+
+INSERT INTO Employee_Role
+VALUES(2, 'Vice Dean');
+
+INSERT INTO Employee_Role
+VALUES(3, 'HR Manager');
+
+INSERT INTO Employee_Role
+VALUES(4, 'Lecturer');
+
+INSERT INTO Employee_Role
+VALUES(5, 'Lecturer');
+
+INSERT INTO Employee_Role
+VALUES(5, 'Dean');
+
+INSERT INTO Employee_Role
+VALUES(6, 'Medical Doctor');
+
+INSERT INTO Employee_Role
+VALUES(7, 'HR Representative');
+
+INSERT INTO Employee_Role
+VALUES(8, 'Teaching Assistant');
+
+INSERT INTO Employee_Role
+VALUES(9, 'President');
+
+-------------
+
+INSERT INTO Role_existsIn_Department
+VALUES('Dean', 'MET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Dean', 'IET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Vice Dean', 'MET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Vice Dean', 'IET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Teaching Assistant', 'MET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Teaching Assistant', 'IET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Lecturer', 'MET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Lecturer', 'IET');
+
+INSERT INTO Role_existsIn_Department
+VALUES('President', 'Upper Board');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Vice President', 'Upper Board');
+
+INSERT INTO Role_existsIn_Department
+VALUES('HR Manager', 'HR Department');
+
+INSERT INTO Role_existsIn_Department
+VALUES('HR Representative', 'HR Department');
+
+INSERT INTO Role_existsIn_Department
+VALUES('Medical Doctor','Medical Department');
+
+--------
+
+INSERT INTO Leave(date_of_request, start_date, end_date)
+VALUES('12/10/2025', '17/11/2025', '20/11/2025');
+
+INSERT INTO Medical_leave
+VALUES(1, 1, 'employee1 medical dissability', 'sick', 1);
+
+INSERT INTO Leave(date_of_request, start_date, end_date)
+VALUES('12/11/2025', '14/11/2025', '20/11/2025');
+
+INSERT INTO Unpaid_Leave
+VALUES(2, 2);
+
+---------
+
+INSERT INTO Document
+VALUES('medical', 'medical desc', 'employee 1 medical document',
+'15/9/2025', '15/12/2025', 'valid', 1, 1, null);
+
+INSERT INTO Document
+VALUES('memo', 'memo document', 'employee 2 memo document',
+'15/9/2025', '15/12/2025', 'valid', 1, null, 2);
