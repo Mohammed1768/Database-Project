@@ -1,18 +1,5 @@
 
-1- when do we do on update cascade/on delete cascade on a FK
 
-2- will they post a correct erd?
 
-3- in 2.3 c, what does it mean to update employee status based on employee status??
+1- in 2.3 c, what does it mean to update employee status based on employee status??
 
-4- el start/end dates fel leave bteb2a inclusive?
-
-5- what is the purpose of the start/end dates in the calculatePayroll procedure?
-	    34an el calculateBonus wel calculateDeductions mafee4 feehom dates, me4 elmafrood yeb2o nafs el7aga?
-
-6- should we prevent multiple calls to the addDeduction procedures? 
-	if yes then how
-
-7- in the UnpaidDeduction procedure do we only add deductions for the current month?
-
-8- when do we make an attribute 'NOT NULL'?

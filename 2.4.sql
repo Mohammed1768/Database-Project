@@ -23,73 +23,145 @@ end;
 go;
 
 
+create proc HR_approval_on_annual 
+@request_ID int, @HR_ID int
+as
+begin
+
+declare @status bit = 1
+declare @num_days int = (
+	select l.num_days from Leave l where l.request_ID = @request_ID
+);
+
+declare @balance int = (
+	select top 1 annual_balance from Employee e inner join Annual_Leave a on (e.employee_ID = a.emp_ID)
+	where a.request_ID = @request_ID
+);
+
+declare @employee_id int = (
+	select top 1 a.emp_ID from Annual_Leave a
+	where a.request_ID = @request_ID
+);
+
+-- request or employee does not exist in the table
+if (@balance is null) return;
+
+
+-- if insufficient leave balance
+if (@balance<@num_days) set @status = 0;
+
+if (@status = 1) insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'approved'); 
+else insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'rejected'); 
+
+
+-- if it has been rejected previously (by a dean, president, etc..)
+if exists (
+	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected')
+set @status = 0;
+
+declare @approval varchar(30) = case 
+    when @status = 1 then 'approved'
+    else 'rejected'
+end
+
+
+update Leave 
+set final_approval_status = case when
+@status = 1 then 'approved'
+    else 'rejected'
+end
+
+end
+go
+
+
+create proc HR_approval_on_accidental
+@request_ID int, @HR_ID int
+as
+begin
+
+declare @status bit = 1
+declare @num_days int = (
+	select l.num_days from Leave l where l.request_ID = @request_ID
+);
+
+declare @balance int = (
+	select top 1 accidental_balance from Employee e inner join Accidental_Leave a on (e.employee_ID = a.emp_ID)
+	where a.request_ID = @request_ID
+);
+
+declare @employee_id int = (
+	select top 1 a.emp_ID from Annual_Leave a
+	where a.request_ID = @request_ID
+);
+
+-- request or employee does not exist in the table
+if (@balance is null) return;
+
+
+-- if insufficient leave balance
+if (@balance<@num_days) set @status = 0;
+
+if (@status = 1) insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'approved'); 
+else insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'rejected'); 
+
+declare @approval varchar(30) = case 
+    when @status = 1 then 'approved'
+    else 'rejected'
+end
+
+update Leave 
+set final_approval_status = @approval
+where request_ID = @request_ID
+
+end
+go
+
+
+
 -- 2.4 b)
 create proc HR_approval_an_acc 
 @request_ID int, @HR_ID int
 as 
 begin
-declare @status bit
 
-declare @annual_balance int = (
-	select top 1 annual_balance from Employee e inner join Annual_Leave a on (e.employee_ID = a.emp_ID)
-	where a.request_ID = @request_ID
-);
-
-declare @accidental_balance int = (
-	select top 1 accidental_balance from Employee e inner join Accidental_Leave a on (e.employee_ID = a.emp_ID)
-	where a.request_ID = @request_ID
-);
-
--- request does not exist in the table
-if (@annual_balance is null and @accidental_balance is null) return;
-
-if (@annual_balance is null) set @annual_balance = 0;
-if (@accidental_balance is null) set @accidental_balance = 0;
-
-
-if (@accidental_balance>0 or @annual_balance>0)
-	 set @status = 1;
-else
-	 set @status = 0;
-
-update Employee_Approve_Leave
-set status = case 
-    when @status = 1 then 'approved'
-    else 'rejected'
-end
-where Emp1_ID = @HR_ID and Leave_ID = @request_ID;
-
-update Leave
-set final_approval_status = case 
-    when @status = 1 then 'approved'
-    else 'rejected'
-end
-where request_ID = @request_ID;
-
+exec HR_approval_on_annual @request_id, @HR_ID;
+exec HR_approval_on_accidental @request_id, @HR_ID;
 
 end
 go;
 
 
-
 -- 2.4 c)
 create proc HR_approval_unpaid 
-@request_ID int, @HR_ID int, @status bit	-- extra parameter 'status' should be passed to the proc
+@request_ID int, @HR_ID int
 as 
 begin
-	update Employee_Approve_Leave
-	set status = case 
-		when @status = 1 then 'approved'
-		else 'rejected'
-	end
-	where Emp1_ID = @HR_ID and Leave_ID = @request_ID;
+	
+declare @hr_representative bit = 0;
+declare @higher_rank bit = 0;
+declare @upper_board bit = 0;
 
-	update Leave
-	set final_approval_status = case 
-		when @status = 1 then 'approved'
-		else 'rejected'
-	end
-	where request_ID = @request_ID;
+
+declare @rank int = (
+	select top 1 r.rank from Employee_Role e inner join Unpaid_Leave u on (e.emp_ID = u.Emp_ID)
+	inner join Role r on (e.role_name = r.role_name)
+	where @request_ID = u.request_ID 
+);
+
+-- if the request is approved by an employee with a higher rank
+if (
+	exists (select * from Employee_Approve_Leave e inner join Employee_Role er on (e.Emp1_ID = er.emp_ID) 
+			inner join Role r on (er.role_name = r.role_name)
+			where e.Leave_ID=@request_ID and r.rank<@rank)
+) set @higher_rank = 1;
+
+declare @status int = 0
+
+if (
+	exists()
+) set @status = 1;
+
 end
 go;
 
@@ -315,35 +387,18 @@ end
 
 /* 
 
-- DeductionDay is it one deduction for all days or one for every day
-
-- what is the dates in DeductionDay, DeductionLeave, and deduction Hours
-
-- Employee will have DeductionDay until he attends the day.
-	i.e if today's date is 17/4, do we add a deduction for dates yet to come?
-- status parameter in HR_approval_unpaid
-
-- formula for salary? is it years_of_experience squared
-
-- How do we handle the case that for example the president needs to approve the request?  
-	is the HR_ID in the procedure going to be the id of the president?
-	if the HR representative is processing the request before the president? does he reject it or pass it
 
 - if the Dean wants a compensation leave? does he also require approval from the president? or just check if he attended during his holiday?
 	same in accidental leave
-	what is the purpose of HR_id in compensation leave request if its done systematically anyways
 
-- what decides whether an unpaid leave request is accepted or rejected
+- Can both dean and vice dean have an accidental leave at the same time?
+		if so then how do we process their leaves
 
-- is friday also considered a day off?
+- When processing annual/accidental leaves, do we assume that the previous reviews 
+		for the leaves has been processed?
+		meaning can the HR recieve the request before the president for example?
 
-- what does he mean by valid reason in compensation leave approval
+- Will the request be approved by HR if the employee has sufficient balance?	
+	keda keda el final status hayeb2a rejected
 
-- in deduction unpaid do if there's an overlapping, do we add a record for the next month
-	or do we wait for the next month to come?
-
-	- how will the Attendance records be added in the attendance table
-	is at the beginning of every month an attendance is added for the entire month
-	or are they added per day? 
-	cause these could cause issues in calculating the deduction
 */
