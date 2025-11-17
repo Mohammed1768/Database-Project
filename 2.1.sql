@@ -229,30 +229,6 @@ end;
 
 
 go;
-create proc dropAllTables as 
-begin
-	drop table if exists Employee_Approve_Leave;
-	drop table if exists  Employee_Replace_Employee;
-	drop table if exists  Performance;
-	drop table if exists  Deduction;
-	drop table if exists  Attendance;	
-	drop table if exists  Payroll;
-	drop table if exists  Document;
-	drop table if exists  Compensation_Leave;
-	drop table if exists  Unpaid_Leave;
-	drop table if exists  Medical_Leave;
-	drop table if exists  Accidental_Leave;
-	drop table if exists  Annual_Leave;
-	drop table if exists  Leave;
-	drop table if exists  Role_existsIn_Department;
-	drop table if exists  Employee_Role;
-	drop table if exists  Role;
-	drop table if exists  Employee_Phone;
-	drop table if exists  Employee;
-	drop table if exists  Department;
-end;
-go;
-
 
 -- delete the tables in a revere topological order
 create procedure dropAllTables as 
