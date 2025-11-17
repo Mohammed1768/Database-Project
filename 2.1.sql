@@ -230,6 +230,8 @@ end;
 
 go;
 
+exec createAllTables;
+
 -- delete the tables in a revere topological order
 create procedure dropAllTables as 
 begin
