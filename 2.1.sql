@@ -8,7 +8,7 @@
 
 create database University_HR_ManagementSystem_Team_No1;
 use University_HR_ManagementSystem_Team_No1;
-go;
+go
 
 
 -- mohamed et2aked mn el schema 34an byetla3 3eny wana ba3adelha wallahy
@@ -255,7 +255,7 @@ begin
 	drop table Employee;
 	drop table Department;
 end;
-go;
+go
 
 
 /*										
@@ -288,4 +288,4 @@ begin
 	truncate table Employee;
 	truncate table Department;
 end;
-go;
+go
