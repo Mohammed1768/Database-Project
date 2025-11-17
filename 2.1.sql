@@ -8,7 +8,7 @@
 
 create database University_HR_ManagementSystem_Team_No1;
 use University_HR_ManagementSystem_Team_No1;
-go;
+go
 
 
 -- mohamed et2aked mn el schema 34an byetla3 3eny wana ba3adelha wallahy
@@ -228,7 +228,7 @@ create table Employee_Approve_Leave (
 end;
 
 
-go;
+go
 create proc dropAllTables as 
 begin
 	drop table if exists Employee_Approve_Leave;
@@ -251,7 +251,7 @@ begin
 	drop table if exists  Employee;
 	drop table if exists  Department;
 end;
-go;
+go
 
 
 -- delete the tables in a revere topological order
@@ -277,7 +277,7 @@ begin
 	drop table Employee;
 	drop table Department;
 end;
-go;
+go
 
 
 /*										
@@ -310,4 +310,4 @@ begin
 	truncate table Employee;
 	truncate table Department;
 end;
-go;
+go
