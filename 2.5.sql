@@ -8,7 +8,6 @@
 Use University_HR_ManagementSystem_Team_No_12;
 Go
 
-
 -- 2.5 a):
 Create Function EmployeeLoginValidation(@employee_ID Int, @password varchar(50))
 Returns Bit
@@ -714,6 +713,15 @@ AS
 
 GO
 
+-- 2.5) m
+Create Proc Upperboard_approve_unpaids
+	@request_ID int,
+	@Upperboard_ID int
+As
+Begin
+	
+End;
+Go
 
 -- 2.5) n
 Create Proc Submit_compensation 
@@ -741,14 +749,14 @@ Begin
 	Values (@employee_ID, @replacement_emp, @compensation_date, @compensation_date)
 
 	--Departement of the employee
-	Declare @departement Varchar(50) = (Select dept_name From Employee Where employee_ID=@employee)
+	Declare @departement Varchar(50) = (Select top 1 dept_name From Employee e Where e.employee_ID=@employee_ID)
 
 	-- Role of the employee who will approve/reject this request
 	Declare @role_name Varchar(50);											
-	if @departement like 'HR%'		-- employee is in the HR departement
+	if (@departement like 'HR%')		-- employee is in the HR departement
 		set @role_name = 'HR_Manager';
 	else 
-		set @role_name = concat('HR_Representative_', @departement) 
+		set @role_name = concat('HR_Representative_', @departement); 
 
 	-- ID of the employee who will approve/reject this request
 	declare @hr_employee int = (
