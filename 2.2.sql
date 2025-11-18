@@ -8,7 +8,8 @@
 use University_HR_ManagementSystem_Team_No_12;
 Go
 
--- 2.2 a)
+
+-- 2.2 a):
 Create View allEmployeeProfiles As 
     Select 
         employee_ID , first_name , last_name, gender , email, address, years_of_experience, 
@@ -16,7 +17,8 @@ Create View allEmployeeProfiles As
     From Employee;
 Go 
 
---2.2 b)
+
+-- 2.2 b):
 Create View NoEmployeeDept As 
     Select dept_name, count(employee_ID) as NoOfEmployees
     from Employee
@@ -24,14 +26,16 @@ Create View NoEmployeeDept As
     group by dept_name;
 Go
 
---2.2 c)
+
+-- 2.2 c):
 Create View allPerformance As 
     Select * 
     From Performance
     Where semester LIKE 'W%';
 Go
 
---2.2 d)
+
+-- 2.2 d):
 Create View allRejectedMedicals As
     Select
         ml.request_ID, ml.Emp_ID AS employee_ID, ml.insurance_status, ml.disability_details, ml.type,
@@ -41,7 +45,8 @@ Create View allRejectedMedicals As
     Where l.final_approval_status = 'rejected';
 Go
 
--- 2.2 e) 
+
+-- 2.2 e): 
 Create View allEmployeeAttendance As
     Select 
         attendance_ID, emp_ID, date, check_in_time, check_out_time, total_duration, status

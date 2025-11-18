@@ -7,8 +7,6 @@
 
 Use University_HR_ManagementSystem_Team_No_12;
 Go
-Use University_HR_ManagementSystem_Team_12;
-Go
 
 
 -- 2.5 a):
@@ -49,6 +47,7 @@ Return
 		  AND YEAR(A.date) = YEAR(GETDATE())
 );
 Go
+
 
 -- 2.5 d):
 Create Function Last_month_payroll(@employee_ID Int)
