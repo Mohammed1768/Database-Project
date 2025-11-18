@@ -4,7 +4,7 @@
 *   (= ._.)
 *   / >  \>
 */
---still to be done: 2.1 d) & check statment for status in Employee_Approve_Leave table
+--still to be done: 2.1 d)
 
 -- 2.1 a):
 create database University_HR_ManagementSystem_Team_No_12;
