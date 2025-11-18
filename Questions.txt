@@ -29,3 +29,5 @@
 13- Is medical dr added to the heirarchy in Medical leave
 
 14- What happens if the employee who is supposed to approve the leave is on leave?
+
+15- Who can replace who, do they need to be in the same departement
