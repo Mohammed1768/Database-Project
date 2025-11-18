@@ -605,5 +605,9 @@ GO
 CREATE PROC Upperboard_approve_unpaids
 	@request_ID INT,
 	@Upperboard_ID INT
+<<<<<<< Updated upstream
 AS
 	
+=======
+AS
+>>>>>>> Stashed changes
