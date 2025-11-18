@@ -5,10 +5,9 @@
 *   / >  \>
 */
 
-
-create database University_HR_ManagementSystem_Team_No1;
-use University_HR_ManagementSystem_Team_No1;
-go;
+create database University_HR_ManagementSystem_Team_No_12;
+use University_HR_ManagementSystem_Team_No_12;
+go
 
 
 -- mohamed et2aked mn el schema 34an byetla3 3eny wana ba3adelha wallahy

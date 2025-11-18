@@ -1,15 +1,12 @@
-﻿
--- بسم الله الرحمن الرحيم
+﻿-- بسم الله الرحمن الرحيم
 
 /*   /\_/\
 *   (= ._.)
 *   / >  \>
 */
 
-
-create database University_HR_ManagementSystem_Team_No1;
-use University_HR_ManagementSystem_Team_No1;
-go;
+use University_HR_ManagementSystem_Team_No_12;
+go
 
 
 -- 2.4 a)

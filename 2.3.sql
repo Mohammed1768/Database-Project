@@ -1,4 +1,11 @@
-USE University_HR_ManagementSystem_Team_12;
+-- بسم الله الرحمن الرحيم
+
+/*   /\_/\
+*   (= ._.)
+*   / >  \>
+*/
+
+use University_HR_ManagementSystem_Team_No_12;
 GO
 
 -- 2.3 a)

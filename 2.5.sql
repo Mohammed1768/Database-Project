@@ -1,7 +1,12 @@
+-- بسم الله الرحمن الرحيم
 
-create database University_HR_ManagementSystem_Team_No1;
-use University_HR_ManagementSystem_Team_No1;
-go;
+/*   /\_/\
+*   (= ._.)
+*   / >  \>
+*/
+
+use University_HR_ManagementSystem_Team_No_12;
+go
 
 -- 2.5) h
 create function Status_leaves() 
