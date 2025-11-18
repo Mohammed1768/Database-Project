@@ -759,3 +759,20 @@ Begin
 End;
 Go
 
+--2.5 o)
+CREATE PROCEDURE Dean_andHR_Evaluation
+    @employee_ID INT,
+    @rating INT,
+    @comment VARCHAR(50),
+    @semester CHAR(3)
+AS
+BEGIN
+    -- Validate rating range
+    IF (@rating < 1 OR @rating > 5)
+        RETURN;
+
+    -- Insert the evaluation
+    INSERT INTO Performance(rating, comments, semester, emp_ID)
+    VALUES(@rating, @comment, @semester, @employee_ID);
+END;
+GO
