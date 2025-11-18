@@ -354,34 +354,3 @@ insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus
 
 end
 
-
-/* 
-
-- Do compensation leaves require approval from higher ranked employees?
-
-- Can we take more than one compensation leave per month
-
-- Can both dean and vice dean have an accidental/medical leave at the same time?
-		if so then how do we process the leaves they are required to approve
-
-- When processing annual/accidental leaves, do we assume that the previous reviews 
-		for the leaves has been processed?
-		meaning can the HR recieve the request before the president for example?
-
-- Will the request be approved by HR if the employee has sufficient balance?	
-	keda keda el final status hayeb2a rejected
-
-- Is there no approval heirarchy in accidental leaves?
-
-- Who is the higher ranking employee in Unpaid_Leave, is it the direct or 
-	can for example the president approve requests for a TA
-
-- Can i have more than one compensation leave per month if i came in additional days?
-
-- Can i make a leave request for next month?
-
-- What happens if some days in the employee's attendance is in his first year and some are in his second year
-
-- What does the salary of the employee represent?
-
-*/

@@ -10,12 +10,33 @@
 create database University_HR_ManagementSystem_Team_No_12;
 go
 use University_HR_ManagementSystem_Team_No_12;
+
+
 go
+-- helper function
+create function getsalary(@employee_id int)
+returns decimal(10,2)
+as 
+begin
+
+declare @base_salary decimal(10,2) = (select top 1 r.base_salary from Employee e inner join Employee_Role er
+		on (e.employee_ID=er.emp_ID) inner join Role r on (r.role_name=er.role_name)
+		where e.employee_ID=@employee_id
+		order by r.rank asc)
+
+declare @YOE int = (select top 1 years_of_experience from Employee where @employee_id=employee_ID);
+
+return @base_salary * (1 + (@YOE/100))
+
+end
+go
+
 
 
 -- 2.1 b):
 create proc createAllTables as	
 begin
+
 
 	create table Department(
 		name varchar(50) primary key, 
@@ -37,7 +58,7 @@ begin
 		emergency_contact_name varchar (50),
 		emergency_contact_phone char (11), 
 		annual_balance int, accidental_balance int, 
-		salary decimal(10,2), 
+		salary as (dbo.getsalary(employee_ID)),
 		hire_date date, 
 		last_working_date date, 
 		dept_name varchar (50), 
@@ -231,8 +252,8 @@ begin
 end;
 go
 
-
 -- 2.1 c):
+-- delete the tables in a revere topological order
 create procedure dropAllTables as 
 begin
 	drop table Employee_Approve_Leave;
@@ -259,13 +280,14 @@ go
 
 
 -- 2.1 d):
+-- lama ne5alas haneb2a ne3melha
 /*										
 create proc dropAllProceduresFunctionsViews as		
 begin
 	-- drop procedures here
 end;
 go
-*/										
+*/
 
 
 -- 2.1 e):
