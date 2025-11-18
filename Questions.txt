@@ -28,3 +28,21 @@
 
 -- If an Employee submits a leave that should be automatically rejected, so we stll 
 	forward it to the HR? and do we add it into the Leave table?
+
+-- If the HR_MET_Representative is on leave and a TA from MET requests a leave, who will accept
+
+-- Do we add exception handling
+
+-- Is the replacement employee set before or after the annual leave request?
+	i.e do i request or then look for a replacement, or look for a replacement then make the request
+
+-- What happens when the HR_manager is on leave?
+
+-- What happens if the HR representative who should approve the request is on leave
+
+-- What if the HR who should accept the request has a pending leave request?
+
+-- What if the HR who should accept the request does not have a replacement
+
+-- If for example a dean should approve a request however he is replaced by an employee
+	will the employee who replaced the dean approve the requests?

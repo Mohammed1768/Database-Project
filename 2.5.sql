@@ -83,8 +83,7 @@ AS
 begin
 	declare @result bit
 	IF  EXISTS ( 
-		select 1
-		from Leave L
+		select * from Leave L
 		WHERE 
 		CAST(L.start_date AS DATE) <= @to_date AND CAST(L.end_date AS DATE) >= @from_date
 		AND
@@ -274,6 +273,70 @@ AS
 
 go
 
+
+create proc Submit_annual
+@employee int,
+@replacement_emp int,
+@start_date date,
+@end_date date
+as
+begin
+
+-- useful variables
+declare @rank int = (select min(rank) from Employee e inner join 
+	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
+	where employee_ID=@employee)
+declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee);
+
+
+-- assign replacement employee
+insert into Employee_Replace_Employee values(@employee, @replacement_emp, @start_date, @end_date)
+
+-- update the leave tables
+
+--			(date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+
+--		(request_id, employee_id, replacement_id)
+insert into Annual_Leave values(@request_id, @employee, @replacement_emp)
+
+
+-- if employee is in the HR departement
+if exists(
+	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+	where er.role_name like 'HR%'
+)
+begin
+	declare @manager int = (select e.employee_ID from Employee e inner join Employee_Role er
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR_Manager')
+
+	insert into Employee_Approve_Leave values(@manager, @request_id)
+	return
+end
+
+declare @hr_rep int = (select * from Employee e inner join Employee_Role r 
+		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR%')
+
+if dbo.Is_On_Leave(@hr_rep, getdate(), getdate())=0
+
+
+if @rank>=5 
+begin
+	-- select employees in the same departement 
+	-- who have a rank of 3 or 4 (aka dean or vice dean) 
+	-- who is not on leave
+	-- dean takes priority over vice dean, i.e sort them by the rank ascending
+	declare @dean int = (
+		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+		inner join Role r on (er.role_name=r.role_name)
+		where r.rank in (3,4) and dbo.Is_On_Leave(employee_ID, getdate(), getdate())=0 and dept_name=@dept_name
+		order by r.rank desc
+	)
+end
+
+end
+go
 
 -- 2.5) h
 create function Status_leaves() 

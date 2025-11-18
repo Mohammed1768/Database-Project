@@ -13,7 +13,8 @@ go
 create function HRLoginValidation(@employee_id int, @password varchar(50)) 
 returns bit as 
 begin	
-	if exists (select * from Employee where employee_ID = @employee_id and password=@password)
+	if exists (select * from Employee where employee_ID = @employee_id and password=@password
+		and dept_name like 'HR%')
 		 return 1;
 	return 0;
 end;
