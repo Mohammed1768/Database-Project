@@ -1,7 +1,15 @@
-USE University_HR_ManagementSystem_Team_12;
+-- بسم الله الرحمن الرحيم
+
+/*   /\_/\
+*   (= ._.)
+*   / >  \>
+*/
+
+use University_HR_ManagementSystem_Team_No_12;
 GO
 
--- 2.3 a)
+
+-- 2.3 a):
 CREATE PROC Update_Status_Doc
 AS
     UPDATE Document
@@ -9,16 +17,16 @@ AS
     WHERE expiry_date < CAST(GETDATE() AS DATE);
 GO
 
--- 2.3 b)
+-- 2.3 b):
 CREATE PROC Remove_Deductions
 AS
     DELETE FROM Deduction
     WHERE EXISTS (SELECT 1 FROM Employee WHERE Employee.employee_ID = Deduction.emp_id AND Employee.employment_status = 'resigned')
 GO
 
---2.3 c)
+--2.3 c):
 
--- 2.3 d)
+-- 2.3 d):
 CREATE PROC Create_Holiday
 AS
     CREATE TABLE Holiday(
@@ -30,7 +38,7 @@ AS
     );
 GO
 
--- 2.3 e)
+-- 2.3 e):
 CREATE PROC  Add_Holiday
     @holiday_name VARCHAR(50),
     @from_date DATE,
@@ -40,7 +48,7 @@ AS
     VALUES(@holiday_name, @from_date, @to_date)
 GO
 
--- 2.3 f)
+-- 2.3 f):
 CREATE PROC Initiate_Attendance 
 AS 
     INSERT INTO Attendance(emp_ID, date) 
@@ -54,7 +62,7 @@ AS
         ); 
 GO
 
---2.3 g)
+--2.3 g):
 CREATE PROCEDURE Update_Attendance
     @employee_id INT,
     @check_in_time TIME,
@@ -67,7 +75,7 @@ AS
     WHERE emp_ID = @employee_id AND date = CAST(GETDATE() AS DATE);
 GO
 
--- 2.3 h)
+-- 2.3 h):
 CREATE PROC Remove_Holiday
 AS
     DELETE FROM Attendance
@@ -78,7 +86,7 @@ AS
     );
 GO
 
--- 2.3 i)
+-- 2.3 i):
 CREATE PROCEDURE Remove_DayOff
     @Employee_ID INT
 AS
@@ -98,7 +106,7 @@ BEGIN
 END;
 GO
 
--- 2.3 j) 
+-- 2.3 j): 
 CREATE PROCEDURE remove_approved_leaves
     @employee_id INT
 AS
@@ -125,7 +133,7 @@ BEGIN
 END;
 GO
 
---2.3 k) 
+--2.3 k): 
 CREATE PROCEDURE Replace_employee
     @Emp1_ID INT,
     @Emp2_ID INT,

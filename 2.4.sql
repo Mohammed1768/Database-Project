@@ -1,15 +1,12 @@
-﻿
--- بسم الله الرحمن الرحيم
+﻿-- بسم الله الرحمن الرحيم
 
 /*   /\_/\
 *   (= ._.)
 *   / >  \>
 */
 
-
-create database University_HR_ManagementSystem_Team_No1;
-use University_HR_ManagementSystem_Team_No1;
-go;
+use University_HR_ManagementSystem_Team_No_12;
+go
 
 
 -- 2.4 a)
@@ -212,14 +209,10 @@ create proc Deduction_hours
 as 
 begin
 
-	-- base salary hourly rate = salary / (22 days * 8 hours)
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / (22 * 8);		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
+	-- hourly rate = salary / (22 days * 8 hours)
 
-	declare @rate decimal(10,2) = @base_salary * (1 +  @years * 0.01);
+	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
+		where e.employee_ID = @employee_ID) / (22 * 8);	
 		
 	declare @hours int = (
 		select sum(total_duration) from Attendance a 
@@ -250,13 +243,8 @@ create proc Deduction_days
 as 
 begin
 
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / 22;		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+			where e.employee_ID = @employee_ID) / 22;
 	
 	-- delete all previously added deductions from the current month
 	delete from Deduction where
@@ -305,13 +293,8 @@ begin
 		set duration = end_date - start_date;
 		
 	
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / 22;		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+				where e.employee_ID = @employee_ID) / 22;
 
 
 	declare @count int = (select sum(duration) from #very_cool_tmp_table_67);
@@ -334,13 +317,8 @@ begin
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	);
 
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / (22 * 8);		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-	declare @rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
+									where e.employee_ID = @employee_ID) / (22 * 8)
 
 	declare @factor int = 
 			(select top 1 r.percentage_overtime from Role r, Employee e, Employee_Role er where	
@@ -376,32 +354,3 @@ insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus
 
 end
 
-
-/* 
-
-- Do compensation leaves require approval from higher ranked employees?
-
-- Can we take more than one compensation leave per month
-
-- Can both dean and vice dean have an accidental/medical leave at the same time?
-		if so then how do we process the leaves they are required to approve
-
-- When processing annual/accidental leaves, do we assume that the previous reviews 
-		for the leaves has been processed?
-		meaning can the HR recieve the request before the president for example?
-
-- Will the request be approved by HR if the employee has sufficient balance?	
-	keda keda el final status hayeb2a rejected
-
-- Is there no approval heirarchy in accidental leaves?
-
-- Who is the higher ranking employee in Unpaid_Leave, is it the direct or 
-	can for example the president approve requests for a TA
-
-- Can i have more than one compensation leave per month if i came in additional days?
-
-- Can i make a leave request for next month?
-
-- What happens if some days in the employee's attendance is in his first year and some are in his second year
-
-*/
