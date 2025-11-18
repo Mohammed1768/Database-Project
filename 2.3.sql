@@ -25,6 +25,27 @@ AS
 GO
 
 --2.3 c):
+CREATE PROC Update_Employment_Status 
+    @Employee_ID int
+AS
+BEGIN
+    DECLARE @Is_On_Leave BIT = dbo.Is_On_Leave(@Employee_ID, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE));
+
+    IF (@Is_On_Leave=1)
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'onleave'
+        WHERE employee_ID = @Employee_ID;
+    END
+
+    ELSE
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'active'
+        WHERE employee_ID = @Employee_ID;
+    END
+END;
+GO
 
 -- 2.3 d):
 CREATE PROC Create_Holiday
