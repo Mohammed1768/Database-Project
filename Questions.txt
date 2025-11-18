@@ -1,27 +1,33 @@
 
--- Do we assume that the admin called the remove day offs every day or do we call it in every proc
+1- in 2.3 c, what does it mean to update employee status based on employee status??
 
--- Can we take more than one compensation leave per month
+2- Do we assume that the admin called the remove day offs every day or do we call it in every proc
 
--- Can both dean and vice dean have an accidental/medical leave at the same time?
+3- Do compensation leaves require approval from higher ranked employees?
+
+4- Can we take more than one compensation leave per month
+
+5- Can both dean and vice dean have an accidental/medical leave at the same time?
 		if so then how do we process the leaves they are required to approve
 
--- When processing annual/accidental leaves, do we assume that the previous reviews 
+6- When processing annual/accidental leaves, do we assume that the previous reviews 
 		for the leaves has been processed?
 		meaning can the HR recieve the request before the president for example?
 
--- Will the request be approved by HR if the employee has sufficient balance?	
+7- Will the request be approved by HR if the employee has sufficient balance?	
 	keda keda el final status hayeb2a rejected
 
--- Who is the higher ranking employee in Unpaid_Leave, is it the direct or 
+8- Is there no approval heirarchy in accidental leaves?
+
+10- Who is the higher ranking employee in Unpaid_Leave, is it the direct or 
 	can for example the president approve requests for a TA
 
--- What happens if some days in the employee's attendance is in his first year and some are in his second year
+11- What happens if some days in the employee's attendance is in his first year and some are in his second year
 
--- Are president/HR approval procedures executed automatically after applying for a leave request 
+12- Are president/HR approval procedures executed automatically after applying for a leave request 
 
--- Is medical dr added to the heirarchy in Medical leave
+13- Is medical dr added to the heirarchy in Medical leave
 
--- Is there conditions for employees replacing employees?
+14- What happens if the employee who is supposed to approve the leave is on leave?
 
--- Can Medical Dr request a leave? and if so who accepts/rejects it?
+15- Who can replace who, do they need to be in the same departement
