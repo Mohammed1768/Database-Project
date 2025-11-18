@@ -27,3 +27,5 @@
 12- Are president/HR approval procedures executed automatically after applying for a leave request 
 
 13- Is medical dr added to the heirarchy in Medical leave
+
+14- What happens if the employee who is supposed to approve the leave is on leave?
