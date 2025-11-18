@@ -170,7 +170,7 @@ declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=
 
 -- number of extra days the employee has worked
 declare @no_days int = (
-	select count(*) from Attendance a where 
+	select count(*) from Attendance a where a.total_duration>8 and
 	month(a.date) = month(@date) and @day_off = datename(weekday, a.date)
 );
 
