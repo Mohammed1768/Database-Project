@@ -19,14 +19,29 @@ returns decimal(10,2)
 as 
 begin
 
-declare @base_salary decimal(10,2) = (select top 1 r.base_salary from Employee e inner join Employee_Role er
-		on (e.employee_ID=er.emp_ID) inner join Role r on (r.role_name=er.role_name)
-		where e.employee_ID=@employee_id
-		order by r.rank asc)
+declare @base_salary decimal(10,2) = (
+				select top 1 r.base_salary 
+				from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) 
+				inner join Role r on (r.role_name=er.role_name)
+				where e.employee_ID=@employee_id
+				order by r.rank asc
+				);
 
-declare @YOE int = (select top 1 years_of_experience from Employee where @employee_id=employee_ID);
+declare @YOE int = (
+				select top 1 years_of_experience 
+				from Employee 
+				where @employee_id=employee_ID
+				);
 
-return @base_salary * (1 + (@YOE/100))
+declare @YOE_perc decimal(4,2) = (
+				select top 1 r.percentage_YOE 
+				from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) 
+				inner join Role r on (r.role_name=er.role_name)
+				where e.employee_ID=@employee_id
+				order by r.rank asc
+				);
+
+return @base_salary + (@YOE_perc/100) * @YOE * @base_salary;
 
 end
 go
