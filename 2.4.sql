@@ -64,7 +64,8 @@ set @final_status = 'rejected';
 
 
 update Leave 
-set final_approval_status = @final_status
+-- this is line 67 in our IDE, we have reserved it for TUFFness
+set final_approval_status = @final_status			
 where request_ID = @request_ID
 
 update Employee_Approve_Leave
@@ -150,7 +151,7 @@ where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
 
 end
-go;
+go
 
 
 -- 2.4 d)
@@ -170,14 +171,16 @@ declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=
 
 -- number of extra days the employee has worked
 declare @no_days int = (
-	select count(*) from Attendance a where a.total_duration>8 and
-	month(a.date) = month(@date) and @day_off = datename(weekday, a.date)
+	select count(*) from Attendance a where datepart(hour, @date)>=8 and
+	month(a.date) = month(@date) and year(a.date) = year(@date) and 
+	@day_off = datename(weekday, a.date)
 );
 
 -- number of compensation leaves the employee took
 declare @previous_leaves int = (
 	select count(*) from Compensation_Leave c inner join Leave l on (c.request_ID = l.request_ID) 
-	where month(l.start_date) = month(@date) and l.final_approval_status='approved'
+	where month(l.start_date) = month(@date) and year(l.start_date)=year(@date)
+	and l.final_approval_status='approved'
 );
 
 declare @status varchar(50) = 'approved';
@@ -200,8 +203,7 @@ where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
 
 end
-go;
-
+go
 
 -- 2.4 e)
 create proc Deduction_hours	
@@ -214,15 +216,16 @@ begin
 	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
 		where e.employee_ID = @employee_ID) / (22 * 8);	
 		
-	declare @hours int = (
-		select sum(total_duration) from Attendance a 
+	declare @seconds int = (
+		select sum(datediff(second, '00:00:00', total_duration)) from Attendance a 
 		where
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
-	);
+	); 
+	declare @hours int = @seconds / (60 * 60);
 
 	declare @attendance int = (
 		select top 1 attendance_ID from Attendance a
-		where total_duration < 8 and 
+		where datepart(hour, a.total_duration) < 8 and 
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 		order by a.date asc
 	);
@@ -235,7 +238,6 @@ begin
 		values(@employee_ID, getdate(), ((22 * 8) - @hours)*@rate, 'missing_hours', 'finalized', @attendance);
 end
 go;
-
 
 -- 2.4 f)
 create proc Deduction_days	
@@ -252,9 +254,9 @@ begin
 		 month(date)=month(getdate()) and year(date)=year(getdate());
 
 
-		-- Deduction(emp_ID, date, amount, type, status, unpaid_ID, attendance_ID)
+	--			Deduction(emp_ID, date, amount, type, status, unpaid_ID, attendance_ID)
 	insert into Deduction(emp_ID, date, amount, type, status)
-		select @employee_ID, datefromparts(year(getdate()), month(getdate()), a.date), 
+		select @employee_ID, datefromparts(year(getdate()), month(getdate()), day(a.date)), 
 			@daily_rate, 'missing_days', 'finalized' 
 		from Attendance a
 		where month(a.date) = month(getdate()) and year(a.date)=year(getdate())
@@ -272,14 +274,19 @@ begin
     declare @CurrentMonthEnd   date = eomonth(getdate());
 
 
-	create table #very_cool_tmp_table_67(start_date date, end_date date, duration int);
+	-- BOI ts is soo tuff
+	create table #very_cool_tmp_table_67(unpaid_id int, start_date date, end_date date, cost decimal(10,2));
 
 	-- all the leaves that overlap with the current month
-	insert into #very_cool_tmp_table_67 (start_date, end_date)
-	select l.start_date, l.end_date from 
+	insert into #very_cool_tmp_table_67 (unpaid_id, start_date, end_date)
+	select u.request_ID, l.start_date, l.end_date from 
 	Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID) WHERE 
 		l.start_date <= @CurrentMonthEnd and l.end_date >= @CurrentMonthStart
 		and @employee_ID = u.Emp_ID;
+
+		
+	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+			where e.employee_ID = @employee_ID) / 22;
 
 	update #very_cool_tmp_table_67
 		set start_date = @CurrentMonthStart 
@@ -290,17 +297,12 @@ begin
 		where end_date > @CurrentMonthEnd;
 
 	update #very_cool_tmp_table_67
-		set duration = end_date - start_date;
-		
-	
-	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
-				where e.employee_ID = @employee_ID) / 22;
+		set cost = day(end_date - start_date + 1) * @daily_rate;
 
-
-	declare @count int = (select sum(duration) from #very_cool_tmp_table_67);
 
 	insert into Deduction(emp_ID, date, amount, type, status, unpaid_ID) 
-		values(@employee_ID, getdate(), @daily_rate * @count, 'unpaid', 'finalized');
+		select @employee_ID, cast(getdate() as date), cost, 'unpaid', 'finalized', unpaid_id
+		from #very_cool_tmp_table_67;
 
 	
 end
@@ -311,11 +313,12 @@ create function Bonus_amount(@employee_id int)
 returns int as 
 begin
 
-	declare @count int = (
-		select sum(total_duration) from Attendance a
+	declare @seconds int = (
+		select sum(datediff(second, '00:00:00', total_duration)) from Attendance a 
 		where
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
-	);
+	); 
+	declare @hours int = @seconds / (60 * 60);
 
 	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
 									where e.employee_ID = @employee_ID) / (22 * 8)
@@ -325,13 +328,12 @@ begin
 			@employee_id = e.employee_ID and @employee_id=er.emp_ID and r.role_name=er.role_name
 			order by r.rank asc);
 
-	declare @bonus int = (@count - 22*8) * @rate * @factor * 0.01;
+	declare @bonus int = (@hours - 22*8) * @rate * @factor * 0.01;
 	if (@bonus <= 0) return 0;
 	return @bonus;
 
 end
 go;
-
 
 
 -- 2.4 i)
@@ -341,16 +343,14 @@ create proc Add_Payroll
 as						
 begin
 
-declare @bonus int = dbo.Bonus_amount(@employee_id)	
-declare @deduction_amount int = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
+declare @bonus decimal(10,2) = dbo.Bonus_amount(@employee_id)	
+declare @deduction_amount decimal(10,2) = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
 
-declare @base_salary decimal(10,2)= (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
-declare @years int = (select top 1 e.years_of_experience from Employee e where e.employee_ID = @employee_ID);
-declare @salary decimal(10,2) = @base_salary * (1 + @years * 0.01);
+declare @salary decimal(10,2)= (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
 
 -- payment_date, final_salary_amount, from_date, to_date, comments, bonus_amount, deduction_amount, emp_ID
 insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus_amount, deductions_amount, emp_ID) 
-			values(getdate(), @salary + @bonus - @deduction_amount, @from, @to, @bonus, @deduction_amount, @employee_id);
+			values(cast(getdate() as date), @salary + @bonus - @deduction_amount, @from, @to, @bonus, @deduction_amount, @employee_id);
 
 end
 
