@@ -109,7 +109,123 @@ begin
 end
 go
 
--- 2.5) g
+
+
+--2.5 g) Kerdany 
+CREATE PROC Submit_annual
+    @employee_ID INT,
+    @replacement_emp INT,
+    @start_date DATE,
+    @end_date DATE
+AS
+BEGIN
+    -- part time check
+    IF (SELECT type_of_contract FROM Employee WHERE employee_ID = @employee_ID) = 'part_time'
+        RETURN;
+
+    DECLARE @leaveID INT;
+    DECLARE @dept VARCHAR(50);
+
+    SELECT @dept = dept_name FROM Employee WHERE employee_ID = @employee_ID;
+
+    INSERT INTO Leave(date_of_request, start_date, end_date)
+    VALUES (CAST(GETDATE() AS DATE), @start_date, @end_date);
+    SET @leaveID = SCOPE_IDENTITY();
+    INSERT INTO Annual_Leave(request_ID, emp_ID, replacement_emp)
+    VALUES (@leaveID, @employee_ID, @replacement_emp);
+
+  --Case 1: Dean/Vice Dean
+
+    IF EXISTS (SELECT 1 FROM Employee_Role 
+               WHERE emp_ID = @employee_ID 
+                 AND role_name IN ('Dean', 'Vice-dean'))
+    BEGIN
+        -- Dean/Vice-Dean checker as if one is already on leave the other cannot be on leave
+        IF EXISTS (
+            SELECT 1 FROM Employee_Role r
+            INNER JOIN Employee e ON r.emp_ID = e.employee_ID
+            WHERE r.role_name = 'Vice-dean'
+              AND e.dept_name = @dept
+              AND dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1
+        ) RETURN;
+
+        IF EXISTS (
+            SELECT 1 FROM Employee_Role r
+            INNER JOIN Employee e ON r.emp_ID = e.employee_ID
+            WHERE r.role_name = 'Dean'
+              AND e.dept_name = @dept
+              AND dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1
+        ) RETURN;
+
+        -- 1) HR approval
+        INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+        SELECT TOP 1 er.emp_ID, @leaveID
+        FROM Employee_Role er
+        INNER JOIN Employee e ON er.emp_ID = e.employee_ID
+        WHERE er.role_name LIKE 'HR_Rep%'
+          AND e.dept_name = @dept
+          AND dbo.Is_On_Leave(er.emp_ID, @start_date, @end_date) = 0;
+
+        -- 2) President approval
+        INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+        SELECT TOP 1 er.emp_ID, @leaveID
+        FROM Employee_Role er
+        WHERE er.role_name = 'President'
+          AND dbo.Is_On_Leave(er.emp_ID, @start_date, @end_date) = 0;
+
+        RETURN;
+    END
+
+-- Case 2: HR Employee
+    IF EXISTS (SELECT 1 FROM Employee_Role
+               WHERE emp_ID = @employee_ID
+                 AND role_name LIKE 'HR_Rep%')
+    BEGIN
+        -- HR Manager approval
+        INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+        SELECT TOP 1 er.emp_ID, @leaveID
+        FROM Employee_Role er
+        WHERE er.role_name LIKE 'HR_Manager%'
+          AND dbo.Is_On_Leave(er.emp_ID, @start_date, @end_date) = 0;
+
+        RETURN;
+    END
+
+-- Case 3: Employee
+
+    -- 1) HR representative of same department
+    INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+    SELECT TOP 1 er.emp_ID, @leaveID
+    FROM Employee_Role er
+    INNER JOIN Employee e ON er.emp_ID = e.employee_ID
+    WHERE er.role_name LIKE 'HR_Rep%'
+      AND e.dept_name = @dept
+      AND dbo.Is_On_Leave(er.emp_ID, @start_date, @end_date) = 0;
+
+    -- 2) Dean/Vice Dean
+    IF EXISTS (
+        SELECT 1 FROM Employee_Role er
+        INNER JOIN Employee e ON er.emp_ID = e.employee_ID
+        WHERE er.role_name = 'Dean'
+          AND e.dept_name = @dept
+          AND dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
+    )
+        INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+        SELECT TOP 1 er.emp_ID, @leaveID
+        FROM Employee_Role er
+        INNER JOIN Employee e ON er.emp_ID = e.employee_ID
+        WHERE er.role_name = 'Dean' AND e.dept_name = @dept;
+    ELSE
+        INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+        SELECT TOP 1 er.emp_ID, @leaveID
+        FROM Employee_Role er
+        INNER JOIN Employee e ON er.emp_ID = e.employee_ID
+        WHERE er.role_name = 'Vice-dean' AND e.dept_name = @dept;
+
+END;
+GO
+
+/*-- 2.5) g
 create proc Submit_annual
 	@employee int,
 	@replacement_emp int,
@@ -273,7 +389,7 @@ AS
 	VALUES (@approves, @leaveID);
 
 go
-
+*/
 
 -- 2.5) h
 create function Status_leaves() 
