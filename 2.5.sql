@@ -714,3 +714,48 @@ AS
 
 GO
 
+
+-- 2.5) n
+Create Proc Submit_compensation 
+	@employee_ID Int,
+	@compensation_date Date,
+	@reason Varchar(50),
+	@date_of_original_workday Date,
+	@replacement_emp Int 
+As
+Begin
+	-- Will skip the Comensation Leave submission if they are not in the same month.
+	If (Month(@compensation_date) <> Month(@date_of_original_workday))
+		Return;
+	
+	--Inserting leave request into its tables
+	Insert Into Leave (date_of_request, start_date, end_date) 
+	Values (Cast(GetDate() As Date), @compensation_date, @compensation_date);
+	Declare @leaveID Int = Scope_Identity();
+
+	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_work_day, reason, replacement_emp_ID)
+	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
+
+	--Inserting into this tble as compensation leave requires a replacement of employee
+	Insert Into Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date) --Emp2 replaces Emp1
+	Values (@employee_ID, @replacement_emp, @compensation_date, @compensation_date)
+
+	--Departement of the employee
+	Declare @departement Varchar(50) = (Select dept_name From Employee Where employee_ID=@employee)
+
+	-- Role of the employee who will approve/reject this request
+	Declare @role_name Varchar(50);											
+	if @departement like 'HR%'		-- employee is in the HR departement
+		set @role_name = 'HR_Manager';
+	else 
+		set @role_name = concat('HR_Representative_', @departement) 
+
+	-- ID of the employee who will approve/reject this request
+	declare @hr_employee int = (
+				select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
+				where role_name = @role_name
+				)
+	insert into Employee_Approve_Leave values(@hr_employee, @leaveID, 'pending')
+End;
+Go
+
