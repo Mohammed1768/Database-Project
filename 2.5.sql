@@ -412,7 +412,6 @@ end
 
 go
 
-
 -- 2.5) k
 CREATE PROC Submit_medical
 	@employee_ID INT,
