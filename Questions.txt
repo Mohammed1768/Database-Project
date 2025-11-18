@@ -25,3 +25,6 @@
 -- Is there conditions for employees replacing employees?
 
 -- Can Medical Dr request a leave? and if so who accepts/rejects it?
+
+-- If an Employee submits a leave that should be automatically rejected, so we stll 
+	forward it to the HR? and do we add it into the Leave table?

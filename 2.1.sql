@@ -259,15 +259,33 @@ end;
 go
 
 
--- 2.1 d):
--- lama ne5alas haneb2a ne3melha
-/*										
+-- 2.1 d):										
 create proc dropAllProceduresFunctionsViews as		
 begin
-	-- drop procedures here
+	-- all functions
+	drop function getsalary, HRLoginValidation, Bonus_amount, EmployeeLoginValidation, MyPerformance,
+	MyAttendance, Last_month_payroll, Deductions_Attendance, Is_On_Leave, Status_leaves
+
+	-- 2.1
+	drop proc createAllTables, dropAllTables, dropAllProceduresFunctionsViews, clearAllTables
+	
+	-- 2.2
+	drop view allEmployeeProfiles, NoEmployeeDept, allPerformance, allRejectedMedicals, allEmployeeAttendance
+	
+	-- 2.3
+	drop proc Update_Status_Doc, Remove_Deductions, Update_Employment_Status, 
+	Create_Holiday, Add_Holiday, Initiate_Attendance, Update_Attendance
+
+	-- 2.4
+	drop proc HR_approval_on_annual, HR_approval_on_accidental, HR_approval_an_acc, HR_approval_unpaid, 
+	HR_approval_comp, Deduction_hours, Deduction_days, Deduction_unpaid, Add_Payroll
+
+	-- 2.5
+	drop proc Submit_annual, Upperboard_approve_annual, Submit_accidental,
+	Submit_medical, Submit_unpaid, Upperboard_approve_unpaids, Submit_compensation, Dean_andHR_Evaluation
+
 end;
 go
-*/
 
 
 -- 2.1 e):

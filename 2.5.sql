@@ -549,9 +549,7 @@ AS
 		from #tempEmpDetails
 		Where #tempEmpDetails.type_of_contract = 'part-time'
 	)
-	BEGIN
 	return;
-	END
 		
 	IF EXISTS (
 		SELECT 1
