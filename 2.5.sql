@@ -5,8 +5,64 @@
 *   / >  \>
 */
 
-use University_HR_ManagementSystem_Team_No_12;
-go
+Use University_HR_ManagementSystem_Team_No_12;
+Go
+Use University_HR_ManagementSystem_Team_12;
+Go
+
+
+-- 2.5 a):
+Create Function EmployeeLoginValidation(@employee_ID Int, @password varchar(50))
+Returns Bit
+As
+Begin
+	IF EXISTS (Select 1 From Employee Where Employee_ID = @employee_ID And Password = @password)
+		Return 1;
+	Return 0;
+End;
+Go
+
+
+-- 2.5 b):
+Create Function MyPerformance(@employee_ID Int,@semester char(3))
+Returns Table
+As
+Return
+(
+	Select P.semester, P.rating, P.comments
+	From Performance P
+	Where P.emp_ID = @employee_ID And P.semester = @semester
+);
+Go
+
+
+-- 2.5 c): Assumed that admin removes unattended official day off records from Attendance table(2.3 i)
+Create Function MyAttendance(@employee_ID Int)
+Returns Table
+As 
+Return
+(
+	Select A.date, A.status, A.check_in_time, A.check_out_time, A.total_duration
+	From Attendance A 
+	Where A.emp_ID = @employee_ID 
+		  AND MONTH(A.date) = MONTH(GETDATE())
+		  AND YEAR(A.date) = YEAR(GETDATE())
+);
+Go
+
+-- 2.5 d):
+Create Function Last_month_payroll(@employee_ID Int)
+Returns Table
+As
+Return
+(
+	Select P.payment_date, P.final_salary_amount, P.from_date, P.to_date, P.comments, P.bonus_amount, P.deductions_amount
+	From Payroll P
+	Where P.emp_ID = @employee_ID 
+		  AND (DATEADD(MONTH, -1, GETDATE())) BETWEEN P.from_date AND P.to_date
+);
+Go
+
 
 -- 2.5) h
 create function Status_leaves() 
