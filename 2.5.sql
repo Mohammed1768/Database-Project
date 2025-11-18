@@ -276,6 +276,21 @@ AS
 go
 
 
+-- 2.5) h
+create function Status_leaves() 
+returns Table
+as 
+return (
+	select l.request_ID, l.date_of_request, l.final_approval_status 
+	from Leave l left outer join Annual_Leave a on (l.request_ID = a.request_ID)
+	left outer join Accidental_Leave ac on (l.request_ID = ac.request_ID)
+
+	where month(l.date_of_request) = month(getdate()) and 
+	(a.request_ID is not null or ac.request_ID is not null)
+);
+go
+
+
 
 -- 2.5) i
 create proc Upperboard_approve_annual
@@ -381,8 +396,6 @@ SELECT top 1 @approves = er.emp_ID
 		AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0) AND e.employee_ID <> @employee
 	ORDER BY NEWID(); --- select random hr representative
 go
-
-
 
 -- 2.5) k
 CREATE PROC Submit_medical
@@ -495,6 +508,7 @@ AS
 	VALUES (@approves, @leaveID);
 
 go
+
 
 -- 2.5) l
 CREATE proc Submit_unpaid
