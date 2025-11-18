@@ -94,13 +94,13 @@ declare @employee_id int = (
     from (
         select emp_ID from Annual_Leave where request_ID = @request_id
 								UNION
-        select emp_ID FROM Accidental_Leave where request_ID = @request_id
+        select emp_ID from Accidental_Leave where request_ID = @request_id
 								UNION
-        select emp_ID FROM Compensation_Leave where request_ID = @request_id
+        select emp_ID from Compensation_Leave where request_ID = @request_id
 								UNION 
-        select emp_ID FROM Medical_Leave where request_ID = @request_id
+        select emp_ID from Medical_Leave where request_ID = @request_id
 								UNION 
-        select emp_ID FROM Unpaid_Leave where request_ID = @request_id
+        select emp_ID from Unpaid_Leave where request_ID = @request_id
     ) as six_sevennnnnn
 );
 
