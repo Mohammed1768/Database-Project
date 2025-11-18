@@ -25,3 +25,5 @@
 11- What happens if some days in the employee's attendance is in his first year and some are in his second year
 
 12- Are president/HR approval procedures executed automatically after applying for a leave request 
+
+13- Is medical dr added to the heirarchy in Medical leave
