@@ -207,7 +207,7 @@ AS
 
 		SELECT top 1 @approves= er.emp_ID
 		FROM Employee_Role er 
-		WHERE er.role_name = 'President' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0);
+		WHERE er.role_name = 'President' AND (dbo.Is_On_Leave(er.emp_ID, @start_date, @end_date) = 0);
 
 		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
 		VALUES (@approves, @leaveID);
@@ -275,7 +275,7 @@ create proc Submit_accidental
 	@start_date date,
 	@end_date date
 AS
-	IF (DATEDIFF(day, start_date, end_date)+1 > 1) -- if duration is greater than 1 day
+	IF (DATEDIFF(day, @start_date, @end_date)+1 > 1) -- if duration is greater than 1 day
 		BEGIN
 		return;
 		END
@@ -602,12 +602,3 @@ AS
 
 GO
 
-CREATE PROC Upperboard_approve_unpaids
-	@request_ID INT,
-	@Upperboard_ID INT
-<<<<<<< Updated upstream
-AS
-	
-=======
-AS
->>>>>>> Stashed changes
