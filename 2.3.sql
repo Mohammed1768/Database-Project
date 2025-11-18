@@ -155,12 +155,49 @@ END;
 GO
 
 --2.3 k): 
-CREATE PROCEDURE Replace_employee
-    @Emp1_ID INT,
-    @Emp2_ID INT,
+--Note: Employee 2 replaces employee 1 
+CREATE OR ALTER PROCEDURE Replace_employee
+    @Emp1_ID INT,    
+    @Emp2_ID INT,     
     @from_date DATE,
     @to_date DATE
 AS
+BEGIN
+    DECLARE @dept1 VARCHAR(50);
+    DECLARE @dept2 VARCHAR(50);
+    DECLARE @contract2 VARCHAR(50);
+    DECLARE @status2 VARCHAR(50);
+
+--Employee cannot replace himself
+    IF @Emp1_ID = @Emp2_ID
+        RETURN;
+
+    SELECT @dept1 = dept_name
+    FROM Employee
+    WHERE employee_ID = @Emp1_ID;
+
+    SELECT @dept2 = dept_name,
+           @contract2 = type_of_contract,
+           @status2 = employment_status
+    FROM Employee
+    WHERE employee_ID = @Emp2_ID;
+
+    --Replacement Cannot be on leave or Part Time and active
+    IF @status2 <> 'active'
+        RETURN;
+
+    IF @contract2 = 'part_time'
+        RETURN;
+
+    IF dbo.Is_On_Leave(@Emp2_ID, @from_date, @to_date) = 1
+        RETURN;
+
+    --Same department check
+    IF @dept1 <> @dept2
+        RETURN;
+
     INSERT INTO Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date)
     VALUES (@Emp1_ID, @Emp2_ID, @from_date, @to_date);
+END;
 GO
+
