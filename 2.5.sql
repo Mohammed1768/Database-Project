@@ -34,21 +34,25 @@ AS
 		where p.emp_ID = @employee_ID AND p.semester = @semester)
 go
 
-create function MyAttendance ---- not complete
+create function MyAttendance 
 (@employee_ID INT)
 returns Table
 AS	
 	return (
-	select * 
-	from Employee e1, (
-	select a.*
-	from Attendance a, employee e
-	where a.emp_ID = @employee_ID AND year(a.date) = year(getdate()) AND
-		month(a.date) = month(getdate()) AND e.employee_ID = @employee_ID
+	select out.* 
+	from Employee e, 
+	(
+		select a.*
+		from Attendance a
+		where a.emp_ID = @employee_ID AND year(a.date) = year(getdate()) AND
+			month(a.date) = month(getdate())
 	) AS out
-	where e1.employee_ID = @employee_ID and 
-	(e1.official_day_off <> datename(weekday, out.date) OR out.check_in_time = null AND out.check_out_time = null)
+	where e.employee_ID = @employee_ID and 
+	(
+		(e.official_day_off <> datename(weekday, out.date)) OR 
+		(out.check_in_time = null AND out.check_out_time = null)
 	)
+)
 
 go
 
@@ -127,6 +131,7 @@ AS
 	FROM Employee e
 	INNER JOIN Employee_Role er
 	ON er.emp_ID = e.employee_ID
+	WHERE e.employee_ID = @employee
 
 
 	-- dont submit if employee is part-time
@@ -135,59 +140,66 @@ AS
 		from #tempEmpDetails
 		Where #tempEmpDetails.type_of_contract = 'part-time'
 	)
-	return
+
+	BEGIN
+	return;
+	END
 
 	INSERT INTO Leave(date_of_request, start_date, end_date)
 	VALUES(GETDATE(), @start_date, @end_date);
 	SELECT @leaveID = SCOPE_IDENTITY(); 
 
 	INSERT INTO Annual_Leave
-	VALUES(@leaveID, @employee, @replacement_emp);
-
-	-- employee is dean or vice dean
-	IF EXISTS (
-		SELECT 1  
-		FROM #tempEmpDetails
-		WHERE #tempEmpDetails.role_name IN ('Dean', 'Vice Dean')
-	) 
-	BEGIN
+	VALUES(@leaveID, @employee, @replacement_emp); 
 		
+	IF EXISTS (
+		SELECT 1
+		FROM #tempEmpDetails
+		WHERE #tempEmpDetails.role_name IN ('Dean', 'Vice-dean')
+	)
+	BEGIN
 		IF EXISTS (
 			SELECT 1  
 			FROM #tempEmpDetails
 			WHERE #tempEmpDetails.role_name = 'Dean' -- requesting employee is dean
 			AND EXISTS (
 				SELECT 1
-				FROM Employee e3
-				INNER JOIN Employee_Role er3
-				ON er3.emp_ID = e3.employee_ID
-				WHERE e3.dept_name = #tempEmpDetails.dept_name
-				AND er3.role_name = 'Vice Dean' AND e3.employment_status = 'on-leave' 
+				FROM Employee e
+				INNER JOIN Employee_Role er
+				ON er.emp_ID = e.employee_ID
+				WHERE e.dept_name = #tempEmpDetails.dept_name
+				AND er.role_name = 'Vice-dean' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1) 
 			)
 		)
+
+		BEGIN
 		return; --- dont submit if the vice dean is on leave
+		END
 
 		IF EXISTS (
 			SELECT 1  
 			FROM #tempEmpDetails
-			WHERE #tempEmpDetails.role_name = 'Vice Dean' -- requesting employee is dean
+			WHERE #tempEmpDetails.role_name = 'Vice-dean' -- requesting employee is vice dean
 			AND EXISTS (
 				SELECT 1
-				FROM Employee e3
-				INNER JOIN Employee_Role er3
-				ON er3.emp_ID = e3.employee_ID
-				WHERE e3.dept_name = #tempEmpDetails.dept_name
-				AND er3.role_name = 'Dean' AND e3.employment_status = 'on-leave'
+				FROM Employee e
+				INNER JOIN Employee_Role er
+				ON er.emp_ID = e.employee_ID
+				WHERE e.dept_name = #tempEmpDetails.dept_name
+				AND er.role_name = 'Dean' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1)
 			)
 		)
-		return;
 
-		SELECT top 1 @approves = er.employee_ID
+		BEGIN
+		return; --- dont submit if the dean is on leave
+		END
+	
+		SELECT top 1 @approves = er.emp_ID
 		FROM Employee_Role er
 		INNER JOIN Employee e
 		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
-			AND e.employment_status = 'active'
+		WHERE er.role_name LIKE 'HR_Rep%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
+			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
 		ORDER BY NEWID(); --- select random hr representative
 
 		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
@@ -195,12 +207,16 @@ AS
 
 		SELECT top 1 @approves= er.emp_ID
 		FROM Employee_Role er 
-		WHERE er.role_name = 'president';
+		WHERE er.role_name = 'President' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0);
 
 		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
 		VALUES (@approves, @leaveID);
-		return;	
+
+		BEGIN
+		return;
+		END
 	END
+
 	-- hr employee
 	IF EXISTS (
 		SELECT 1  
@@ -212,44 +228,55 @@ AS
 		FROM Employee_Role er 
 		INNER JOIN Employee e
 		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name LIKE 'HR_Manager%' AND e.employment_status = 'active'
+		WHERE er.role_name LIKE 'HR_Manager%' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
 		ORDER BY NEWID(); --- select random hr manager
 
 		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
 		VALUES (@approves, @leaveID);
+		
+		BEGIN
 		return;
+		END
 	END
 
 	-- not hr or dean or vice dean
-	SELECT top 1 @approves = er.employee_ID
+	SELECT top 1 @approves = er.emp_ID
 	FROM Employee_Role er
 	INNER JOIN Employee e
 	ON e.employee_ID = er.emp_ID
 	WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
-		AND e.employment_status = 'active'
+		 AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
 	ORDER BY NEWID(); --- select random hr representative
 
 	INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
 	VALUES (@approves, @leaveID);
 
-	SELECT top 1 @approves = er.employee_ID
-	FROM Employee_Role er
-	INNER JOIN Employee e
-	ON e.employee_ID = er.emp_ID
-	WHERE er.role_name = 'Dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) AND e.employment_status = 'active'
-	
-	IF (dbo.Is_On_Leave(@approves, @start_date, @end_date) = 1)
-	BEGIN
-		SELECT top 1 @approves = er.employee_ID
+	IF EXISTS(
+		SELECT top 1 er.emp_ID
 		FROM Employee_Role er
 		INNER JOIN Employee e
 		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name = 'Vice Dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) AND e.employment_status = 'active'
+		WHERE er.role_name = 'Dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) 
+			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
+	)
+	
+		SELECT top 1 @approves = er.emp_ID
+		FROM Employee_Role er
+		INNER JOIN Employee e
+		ON e.employee_ID = er.emp_ID
+		WHERE er.role_name = 'Dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) 
+			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0);
 
-		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
-		VALUES (@approves, @leaveID);
+	ELSE
 
-	END
+		SELECT top 1 @approves = er.emp_ID
+		FROM Employee_Role er
+		INNER JOIN Employee e
+		ON e.employee_ID = er.emp_ID
+		WHERE er.role_name = 'Vice-dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) AND e.employment_status = 'active'
+	
+	INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+	VALUES (@approves, @leaveID);
 
 go
 
@@ -261,17 +288,19 @@ create proc Submit_accidental
 	@start_date date,
 	@end_date date
 AS
-	IF (datepart(day, @start_date, @end_date) > 1)
+	IF (DATEDIFF(day, start_date, end_date)+1 > 1) -- if duration is greater than 1 day
+		BEGIN
 		return;
+		END
 	DECLARE @approves INT
 	DECLARE @leaveID int
 
-	SELECT top 1 @approves = er.employee_ID
+	SELECT top 1 @approves = er.emp_ID
 		FROM Employee_Role er
 		INNER JOIN Employee e
 		ON e.employee_ID = er.emp_ID
 		WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
-			AND e.employment_status = 'active'
+			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
 		ORDER BY NEWID(); --- select random hr representative
 
 	INSERT INTO Leave(date_of_request, start_date, end_date)
@@ -285,4 +314,115 @@ AS
 	VALUES(@approves, @leaveID);
 
 GO
+
+CREATE PROC Submit_medical
+	@employee_ID INT,
+	@start_date DATE,
+	@end_date DATE,
+	@type VARCHAR(50),
+	@insurance_status BIT,
+	@disability_details VARCHAR(50),
+	@document_description VARCHAR(50),
+	@file_name VARCHAR(50)
+AS
+	DECLARE @leaveID int
+	DECLARE @approves int
+
+	-- save employee details
+	SELECT *
+	INTO #tempEmpDetails
+	FROM Employee e
+	INNER JOIN Employee_Role er
+	ON er.emp_ID = e.employee_ID
+	WHERE e.employee_ID = @employee_ID
+
+	IF EXISTS (
+		SELECT 1
+		FROM #tempEmpDetails
+		WHERE #tempEmpDetails.role_name IN ('Dean', 'Vice-dean')
+	)
+	BEGIN
+		IF EXISTS (
+			SELECT 1  
+			FROM #tempEmpDetails
+			WHERE #tempEmpDetails.role_name = 'Dean' -- requesting employee is dean
+			AND EXISTS (
+				SELECT 1
+				FROM Employee e
+				INNER JOIN Employee_Role er
+				ON er.emp_ID = e.employee_ID
+				WHERE e.dept_name = #tempEmpDetails.dept_name
+				AND er.role_name = 'Vice-dean' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1) 
+			)
+		)
+
+		BEGIN
+		return; --- dont submit if the vice dean is on leave
+		END
+
+		IF EXISTS (
+			SELECT 1  
+			FROM #tempEmpDetails
+			WHERE #tempEmpDetails.role_name = 'Vice-dean' -- requesting employee is vice dean
+			AND EXISTS (
+				SELECT 1
+				FROM Employee e
+				INNER JOIN Employee_Role er
+				ON er.emp_ID = e.employee_ID
+				WHERE e.dept_name = #tempEmpDetails.dept_name
+				AND er.role_name = 'Dean' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1)
+			)
+		)
+
+		BEGIN
+		return; --- dont submit if the dean is on leave
+		END
+	END
+
+	IF @type = 'maternity'
+	BEGIN
+		-- dont submit if employee is part-timeer or a male requesting maternity leave
+		IF EXISTS (
+		select 1
+		from #tempEmpDetails
+		Where #tempEmpDetails.type_of_contract = 'part-time' OR #tempEmpDetails.gender = 'M'
+		) 
+		BEGIN
+		return;
+		END
+	END
+	
+	INSERT INTO Leave(date_of_request, start_date, end_date)
+	VALUES(getdate(), @start_date, @end_date)
+	SELECT @leaveID = SCOPE_IDENTITY(); 
+
+	INSERT INTO Medical_Leave
+	VALUES(@leaveID, @insurance_status, @disability_details, @type, @employee_ID);
+
+	UPDATE Document
+	SET medical_ID = @leaveID
+	WHERE emp_ID = @employee_ID AND file_name = @file_name AND description = @document_description;
+
+	SELECT top 1 @approves = er.emp_ID
+	FROM Employee_Role er
+	INNER JOIN Employee e
+	ON e.employee_ID = er.emp_ID
+	WHERE er.role_name LIKE 'Medical%' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
+	ORDER BY NEWID(); --- select random medical doctor
+
+	INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+	VALUES (@approves, @leaveID);
+
+	SELECT top 1 @approves = er.emp_ID
+	FROM Employee_Role er
+	INNER JOIN Employee e
+	ON e.employee_ID = er.emp_ID
+	WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
+		 AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
+	ORDER BY NEWID(); --- select random hr representative
+
+	INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
+	VALUES (@approves, @leaveID);
+
+go
 
