@@ -291,7 +291,6 @@ return (
 go
 
 
-
 -- 2.5) i
 create proc Upperboard_approve_annual
 @request_ID int, @Upperboard_ID int, @replacement_ID int
@@ -315,7 +314,7 @@ declare @employee_id int = (
         select emp_ID from Medical_Leave where request_ID = @request_id
 								UNION 
         select emp_ID from Unpaid_Leave where request_ID = @request_id
-    ) as six_sevennnnnn
+    ) as six_sevennnnnn														-- BOI ts is soo tuff
 );
 
 -- if replacement is on Accidental Leave
@@ -380,22 +379,39 @@ create proc Submit_accidental
 @employee int,
 @start_date date,
 @end_date date
-AS
-IF (DATEDIFF(day, @start_date, @end_date)+1 > 1) -- if duration is greater than 1 day
-	BEGIN
+as
+begin
+-- if duration is greater than 1 day skip the request
+IF (DATEDIFF(day, @start_date, @end_date) + 1 > 1) 
 	return;
-	END
-DECLARE @approves INT
-DECLARE @leaveID int
 
-SELECT top 1 @approves = er.emp_ID
-	FROM Employee_Role er
-	INNER JOIN Employee e
-	ON e.employee_ID = er.emp_ID
-	WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
-		AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0) AND e.employee_ID <> @employee
-	ORDER BY NEWID(); --- select random hr representative
+--			Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+
+--		(request_id, employee_id)
+insert into Accidental_Leave values(@request_id, @employee)
+
+
+declare @departement varchar(50) = (select dept_name from Employee where employee_ID=@employee);	-- departement the employee works in
+
+declare @role_name varchar(50);												-- role of the employee who will approve the request
+if @departement like 'HR%'		-- employee is in the HR departement
+	set @role_name = 'HR_Manager';
+else 
+	set @role_name = concat('HR_Representative_', @departement) 
+
+-- get the id of the employee with the the above role
+declare @hr_employee int = (
+	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
+	where role_name = @role_name
+)
+
+insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
+end
+
 go
+
 
 -- 2.5) k
 CREATE PROC Submit_medical
@@ -508,7 +524,6 @@ AS
 	VALUES (@approves, @leaveID);
 
 go
-
 
 -- 2.5) l
 CREATE proc Submit_unpaid
