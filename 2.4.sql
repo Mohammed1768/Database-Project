@@ -212,14 +212,10 @@ create proc Deduction_hours
 as 
 begin
 
-	-- base salary hourly rate = salary / (22 days * 8 hours)
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / (22 * 8);		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
+	-- hourly rate = salary / (22 days * 8 hours)
 
-	declare @rate decimal(10,2) = @base_salary * (1 +  @years * 0.01);
+	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
+		where e.employee_ID = @employee_ID) / (22 * 8);	
 		
 	declare @hours int = (
 		select sum(total_duration) from Attendance a 
@@ -250,13 +246,8 @@ create proc Deduction_days
 as 
 begin
 
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / 22;		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+			where e.employee_ID = @employee_ID) / 22;
 	
 	-- delete all previously added deductions from the current month
 	delete from Deduction where
@@ -305,13 +296,8 @@ begin
 		set duration = end_date - start_date;
 		
 	
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / 22;		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+				where e.employee_ID = @employee_ID) / 22;
 
 
 	declare @count int = (select sum(duration) from #very_cool_tmp_table_67);
@@ -334,13 +320,8 @@ begin
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	);
 
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / (22 * 8);		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-	declare @rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
+									where e.employee_ID = @employee_ID) / (22 * 8)
 
 	declare @factor int = 
 			(select top 1 r.percentage_overtime from Role r, Employee e, Employee_Role er where	
@@ -403,5 +384,7 @@ end
 - Can i make a leave request for next month?
 
 - What happens if some days in the employee's attendance is in his first year and some are in his second year
+
+- What does the salary of the employee represent?
 
 */
