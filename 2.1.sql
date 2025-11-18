@@ -10,10 +10,10 @@
 create database University_HR_ManagementSystem_Team_No_12;
 go
 use University_HR_ManagementSystem_Team_No_12;
-
-
 go
--- helper function
+
+
+-- helper function:
 create function getsalary(@employee_id int)
 returns decimal(10,2)
 as 
@@ -30,7 +30,6 @@ return @base_salary * (1 + (@YOE/100))
 
 end
 go
-
 
 
 -- 2.1 b):
