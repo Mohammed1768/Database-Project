@@ -275,27 +275,7 @@ AS
 
 go
 
--- 2.5) h
-create proc Submit_accidental
-	@employee int,
-	@start_date date,
-	@end_date date
-AS
-	IF (DATEDIFF(day, @start_date, @end_date)+1 > 1) -- if duration is greater than 1 day
-		BEGIN
-		return;
-		END
-	DECLARE @approves INT
-	DECLARE @leaveID int
 
-	SELECT top 1 @approves = er.emp_ID
-		FROM Employee_Role er
-		INNER JOIN Employee e
-		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
-			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0) AND e.employee_ID <> @employee
-		ORDER BY NEWID(); --- select random hr representative
-go
 
 -- 2.5) i
 create proc Upperboard_approve_annual
@@ -379,7 +359,32 @@ where Leave_ID=@request_ID;
 end
 go
 
+
 -- 2.5) j
+create proc Submit_accidental
+@employee int,
+@start_date date,
+@end_date date
+AS
+IF (DATEDIFF(day, @start_date, @end_date)+1 > 1) -- if duration is greater than 1 day
+	BEGIN
+	return;
+	END
+DECLARE @approves INT
+DECLARE @leaveID int
+
+SELECT top 1 @approves = er.emp_ID
+	FROM Employee_Role er
+	INNER JOIN Employee e
+	ON e.employee_ID = er.emp_ID
+	WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
+		AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0) AND e.employee_ID <> @employee
+	ORDER BY NEWID(); --- select random hr representative
+go
+
+
+
+-- 2.5) k
 CREATE PROC Submit_medical
 	@employee_ID INT,
 	@start_date DATE,
@@ -491,7 +496,7 @@ AS
 
 go
 
--- 2.5) k
+-- 2.5) l
 CREATE proc Submit_unpaid
 	@employee_ID INT,
 	@start_date DATE,
@@ -681,8 +686,3 @@ AS
 
 GO
 
-CREATE PROC Upperboard_approve_unpaids
-	@request_ID INT,
-	@Upperboard_ID INT
-AS
-	
