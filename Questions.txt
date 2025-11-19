@@ -18,6 +18,8 @@ leave, or do we wait till the very end and check who approved the request?
 
 if its assigned previously, who will approve if the HR_Rep_MET is on leave?
 
+how many HR_Rep are there per departement
+
 if it should be a pool of requests and each employee approves a bunch of leaves
     what about the dr
 
