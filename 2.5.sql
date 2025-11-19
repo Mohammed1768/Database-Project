@@ -19,7 +19,6 @@ Begin
 End;
 Go
 
-
 -- 2.5 b):
 Create or alter Function MyPerformance(@employee_ID Int,@semester char(3))
 Returns Table
@@ -31,7 +30,6 @@ Return
 	Where P.emp_ID = @employee_ID And P.semester = @semester
 );
 Go
-
 
 -- 2.5 c): Assumed that admin removes unattended official day off records from Attendance table(2.3 i)
 Create or alter Function MyAttendance(@employee_ID Int)
@@ -46,7 +44,6 @@ Return
 		  AND YEAR(A.date) = YEAR(GETDATE())
 );
 Go
-
 
 -- 2.5 d):
 Create or alter Function Last_month_payroll(@employee_ID Int)
@@ -107,7 +104,6 @@ begin
 	return @result
 end
 go
-
 
 -- 2.5) g
 create or alter proc Submit_annual
@@ -224,7 +220,6 @@ return (
 );
 go
 
-
 -- 2.5) i
 create or alter proc Upperboard_approve_annual
 @request_ID int, @Upperboard_ID int, @replacement_ID int
@@ -270,7 +265,6 @@ where Leave_ID=@request_ID;
 
 end
 go
-
 
 -- 2.5) j
 create or alter proc Submit_accidental
@@ -410,7 +404,7 @@ end
 go
 
 -- 2.5) l
-CREATE proc Submit_unpaid
+CREATE or alter proc Submit_unpaid
 	@employee_ID INT,
 	@start_date DATE,
 	@end_date DATE,
@@ -426,7 +420,7 @@ declare @rank int = (select min(rank) from Employee e inner join
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
 declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
-declare @duration int = day(@end_date - @start_date) + 1
+declare @duration int = datediff(day, @start_date, @end_date) + 1
 
 -- part time employees are not eligible 
 if (@type_of_contract='part_time')
@@ -476,22 +470,22 @@ end
 GO
 
 -- 2.5) m
-Create Proc Upperboard_approve_unpaids
+Create or alter Proc Upperboard_approve_unpaids
 	@request_ID int,
 	@Upperboard_ID int
 As
 Begin
 	-- to be removed
 	create table a7a(id int);
-
 /*
-	Is it any employee in the UpperBoard?
+	Question:
+	Is it any employee in the UpperBoard or is it previously specified?
 */
 End;
 Go
 
 -- 2.5) n
-Create Proc Submit_compensation 
+Create or alter Proc Submit_compensation 
 	@employee_ID Int,
 	@compensation_date Date,
 	@reason Varchar(50),
@@ -511,7 +505,7 @@ Begin
 	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_work_day, reason, replacement_emp_ID)
 	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
 
-	--Inserting into this tble as compensation leave requires a replacement of employee
+	--Inserting into this table as compensation leave requires a replacement of employee
 	Insert Into Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date) --Emp2 replaces Emp1
 	Values (@employee_ID, @replacement_emp, @compensation_date, @compensation_date)
 

@@ -10,51 +10,43 @@ go
 
 
 -- 2.4 a)
-create function HRLoginValidation(@employee_id int, @password varchar(50)) 
+create or alter function HRLoginValidation(@employee_id int, @password varchar(50)) 
 returns bit as 
 begin	
 	if exists (select * from Employee where employee_ID = @employee_id and password=@password)
 		 return 1;
 	return 0;
 end;
-go;
+go
 
 
-create proc HR_approval_on_annual 
+create or alter proc HR_approval_on_annual 
 @request_ID int, @HR_ID int
 as
 begin
 
-declare @num_days int = (
-	select l.num_days from Leave l where l.request_ID = @request_ID
-);
+-- useful variables
+declare @num_days int = (select l.num_days from Leave l where l.request_ID = @request_ID);
 declare @employee_id int = (
 	select top 1 a.emp_ID from Annual_Leave a
 	where a.request_ID = @request_ID
 );
-
 declare @balance int = (
 	select top 1 annual_balance from Employee e
 	where e.employee_ID = @employee_id
 );
-
 declare @start_date date = (select l.start_date from Leave l where l.request_ID=@request_ID);
 declare @end_date date = (select l.end_date from Leave l where l.request_ID=@request_ID);
-
 
 -- request or employee does not exist in the table
 if (@balance is null) return;
 
 
--- if insufficient leave balance
 declare @hr_status varchar(50) = 'approved'
+
+-- if insufficient leave balance
 if (@balance<@num_days) set @hr_status = 'rejected'; 
 
--- if no replacement employee is available
-if not exists(
-	select * from Employee_Replace_Employee e where
-	e.Emp2_ID=@employee_id and e.from_date<=@start_date and e.to_date>=@end_date
-) set @hr_status = 'rejected';
 
 declare @final_status varchar(50) = @hr_status;
 -- if it has been rejected previously (by a dean, president, etc..)
@@ -62,9 +54,7 @@ if exists (
 	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected')
 set @final_status = 'rejected';
 
-
 update Leave 
--- this is line 67 in our IDE, we have reserved it for TUFFness
 set final_approval_status = @final_status			
 where request_ID = @request_ID
 
@@ -72,11 +62,19 @@ update Employee_Approve_Leave
 set status = @hr_status
 where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
+if @final_status = 'approved'
+begin
+	update Employee
+	set annual_balance = annual_balance - @num_days
+	where employee_ID=@employee_id
+end
+
 end
 go
+-- this is line 67 in the IDE, we have reserved it for TUFFness
 
 
-create proc HR_approval_on_accidental
+create or alter proc HR_approval_on_accidental
 @request_ID int, @HR_ID int
 as
 begin
@@ -88,7 +86,6 @@ declare @employee_id int = (
 	select top 1 a.emp_ID from Accidental_Leave a
 	where a.request_ID = @request_ID
 );
-
 declare @balance int = (
 	select top 1 accidental_balance from Employee e
 	where e.employee_ID = @employee_id
@@ -111,12 +108,19 @@ update Employee_Approve_Leave
 set status = @hr_status
 where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
+if @hr_status = 'approved'
+begin
+	update Employee
+	set annual_balance = annual_balance - @num_days
+	where employee_ID=@employee_id
+end
+
 end
 go
 
 
 -- 2.4 b)
-create proc HR_approval_an_acc 
+create or alter proc HR_approval_an_acc 
 @request_ID int, @HR_ID int
 as 
 begin
@@ -125,17 +129,18 @@ exec HR_approval_on_annual @request_id, @HR_ID;
 exec HR_approval_on_accidental @request_id, @HR_ID;
 
 end
-go;
+go
 
 
 -- 2.4 c)
-create proc HR_approval_unpaid 
+create or alter proc HR_approval_unpaid 
 @request_ID int, @HR_ID int
 as 
 begin
 	
 declare @status varchar(50) = 'approved';
 
+-- if the request has been previously rejected in the heirarchy
 if exists (
 	select * from Employee_Approve_Leave e where 
 	e.Leave_ID=@request_ID and e.status='rejected' 
@@ -155,7 +160,7 @@ go
 
 
 -- 2.4 d)
-create proc HR_approval_comp 	
+create or alter proc HR_approval_comp 	
 @request_ID int, @HR_ID int
 as 
 begin
@@ -187,11 +192,6 @@ declare @status varchar(50) = 'approved';
 
 if (@no_days <= @previous_leaves) set @status = 'rejected';
 
--- if no replacement is available
-if not exists(
-	select * from Employee_Replace_Employee e where
-	e.Emp2_ID=@emp_id and e.from_date<=@date and e.to_date>=@date
-) set @status = 'rejected';
 
 update Leave 
 set final_approval_status = @status
@@ -206,7 +206,7 @@ end
 go
 
 -- 2.4 e)
-create proc Deduction_hours	
+create or alter proc Deduction_hours	
 @employee_ID int
 as 
 begin
@@ -237,10 +237,10 @@ begin
 	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
 		values(@employee_ID, getdate(), ((22 * 8) - @hours)*@rate, 'missing_hours', 'finalized', @attendance);
 end
-go;
+go
 
 -- 2.4 f)
-create proc Deduction_days	
+create or alter proc Deduction_days	
 @employee_ID int
 as 
 begin
@@ -263,39 +263,40 @@ begin
 			and a.status = 'absent' and a.emp_ID = @employee_ID; 
 
 end
-go;
+go
 
 -- 2.4 g)
-create proc Deduction_unpaid	
+create or alter proc Deduction_unpaid	
 @employee_ID int
 as 
 begin
+	
+	-- useful variables
 	declare @CurrentMonthStart date = datefromparts(year(getdate()), month(getdate()), 1);
     declare @CurrentMonthEnd   date = eomonth(getdate());
+		declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+			where e.employee_ID = @employee_ID) / 22;
 
 
 	-- BOI ts is soo tuff
 	create table #very_cool_tmp_table_67(unpaid_id int, start_date date, end_date date, cost decimal(10,2));
 
-	-- all the leaves that overlap with the current month
+	-- insert all the leaves that overlap with the current month into the 67 table
 	insert into #very_cool_tmp_table_67 (unpaid_id, start_date, end_date)
 	select u.request_ID, l.start_date, l.end_date from 
 	Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID) WHERE 
 		l.start_date <= @CurrentMonthEnd and l.end_date >= @CurrentMonthStart
 		and @employee_ID = u.Emp_ID;
 
-		
-	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
-			where e.employee_ID = @employee_ID) / 22;
-
+	-- we will only consider the part that overlap in our current month
 	update #very_cool_tmp_table_67
 		set start_date = @CurrentMonthStart 
 		where start_date < @CurrentMonthStart;
-
 	update #very_cool_tmp_table_67
 		set end_date = @CurrentMonthEnd 
 		where end_date > @CurrentMonthEnd;
 
+	-- calculate the cost
 	update #very_cool_tmp_table_67
 		set cost = day(end_date - start_date + 1) * @daily_rate;
 
@@ -306,10 +307,10 @@ begin
 
 	
 end
-go;
+go
 
 -- 2.4 h)
-create function Bonus_amount(@employee_id int)
+create or alter function Bonus_amount(@employee_id int)
 returns int as 
 begin
 
@@ -333,11 +334,11 @@ begin
 	return @bonus;
 
 end
-go;
+go
 
 
 -- 2.4 i)
-create proc Add_Payroll
+create or alter proc Add_Payroll
 @employee_id int,
 @from date, @to date	
 as						
@@ -354,3 +355,4 @@ insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus
 
 end
 
+go
