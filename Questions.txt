@@ -1,14 +1,20 @@
 
 -- Do we assume that the admin called the remove day offs every day or do we call it in every proc
 
--- Can we take more than one compensation leave per month
+-- When processing annual/accidental leaves, do we assume that the previous reviews 
+		for the leaves has been processed?
+		meaning can the HR recieve the request before the president for example?
+
+-- Are president/HR approval procedures executed automatically after applying for a leave request 
+
 
 -- Can both dean and vice dean have an accidental/medical leave at the same time?
 		if so then how do we process the leaves they are required to approve
 
--- When processing annual/accidental leaves, do we assume that the previous reviews 
-		for the leaves has been processed?
-		meaning can the HR recieve the request before the president for example?
+-- Is medical dr added to the heirarchy in Medical leave
+
+-- Can Medical Dr request a leave? and if so who accepts/rejects it?
+
 
 -- Will the request be approved by HR if the employee has sufficient balance?	
 	keda keda el final status hayeb2a rejected
@@ -16,15 +22,32 @@
 -- Who is the higher ranking employee in Unpaid_Leave, is it the direct or 
 	can for example the president approve requests for a TA
 
--- What happens if some days in the employee's attendance is in his first year and some are in his second year
 
--- Are president/HR approval procedures executed automatically after applying for a leave request 
+-- Can we take more than one compensation leave per month
 
--- Is medical dr added to the heirarchy in Medical leave
 
 -- Is there conditions for employees replacing employees?
 
--- Can Medical Dr request a leave? and if so who accepts/rejects it?
 
 -- If an Employee submits a leave that should be automatically rejected, so we stll 
 	forward it to the HR? and do we add it into the Leave table?
+
+-- If the HR_MET_Representative is on leave and a TA from MET requests a leave, who will accept
+
+-- Do we add exception handling
+
+-- Is the replacement employee set before or after the annual leave request?
+	i.e do i request or then look for a replacement, or look for a replacement then make the request
+
+-- What happens when the HR_manager is on leave?
+
+-- What happens if the HR representative who should approve the request is on leave
+
+-- What if the HR who should accept the request has a pending leave request?
+
+-- What if the HR who should accept the request does not have a replacement
+
+-- Do we treat pending status as accepted when checking who should approve the request
+
+-- 2.5 m) what does he mean memo document is submitted and a valid reason
+	what determines if its a valid reason + there is no reason attribute in Unpaid

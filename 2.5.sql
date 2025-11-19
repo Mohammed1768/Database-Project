@@ -9,7 +9,7 @@ Use University_HR_ManagementSystem_Team_No_12;
 Go
 
 -- 2.5 a):
-Create Function EmployeeLoginValidation(@employee_ID Int, @password varchar(50))
+Create or alter Function EmployeeLoginValidation(@employee_ID Int, @password varchar(50))
 Returns Bit
 As
 Begin
@@ -21,7 +21,7 @@ Go
 
 
 -- 2.5 b):
-Create Function MyPerformance(@employee_ID Int,@semester char(3))
+Create or alter Function MyPerformance(@employee_ID Int,@semester char(3))
 Returns Table
 As
 Return
@@ -34,7 +34,7 @@ Go
 
 
 -- 2.5 c): Assumed that admin removes unattended official day off records from Attendance table(2.3 i)
-Create Function MyAttendance(@employee_ID Int)
+Create or alter Function MyAttendance(@employee_ID Int)
 Returns Table
 As 
 Return
@@ -49,7 +49,7 @@ Go
 
 
 -- 2.5 d):
-Create Function Last_month_payroll(@employee_ID Int)
+Create or alter Function Last_month_payroll(@employee_ID Int)
 Returns Table
 As
 Return
@@ -62,7 +62,7 @@ Return
 Go
 
 -- 2.5) e
-create function Deductions_Attendance
+create or alter function Deductions_Attendance
 (@employee_ID int, @month int)
 returns Table
 AS
@@ -76,15 +76,14 @@ return (
 go
 
 -- 2.5) f
-create function Is_On_Leave
+create or alter function Is_On_Leave
 (@employee_ID int, @from_date date, @to_date date)
 returns bit
 AS
 begin
 	declare @result bit
 	IF  EXISTS ( 
-		select 1
-		from Leave L
+		select * from Leave L
 		WHERE 
 		CAST(L.start_date AS DATE) <= @to_date AND CAST(L.end_date AS DATE) >= @from_date
 		AND
@@ -109,174 +108,110 @@ begin
 end
 go
 
+
 -- 2.5) g
-create proc Submit_annual
-	@employee int,
-	@replacement_emp int,
-	@start_date date,
-	@end_date date
-AS
-	DECLARE @leaveID int
-	DECLARE @approves int
+create or alter proc Submit_annual
+@employee int,
+@replacement_emp int,
+@start_date date,
+@end_date date
+as
+begin
 
-	-- save employee details
-	SELECT *
-	INTO #tempEmpDetails
-	FROM Employee e
-	INNER JOIN Employee_Role er
-	ON er.emp_ID = e.employee_ID
-	WHERE e.employee_ID = @employee
+-- if employee is part time: do not consider the request
+if exists (
+	select * from Employee where type_of_contract='part_time'
+	and employee_ID=@employee
+) return
 
 
-	-- dont submit if employee is part-time
-	IF NOT EXISTS (
-		select 1
-		from #tempEmpDetails
-		Where #tempEmpDetails.type_of_contract = 'part-time'
-	)
+-- useful variables
+declare @rank int = (select min(rank) from Employee e inner join 
+	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
+	where employee_ID=@employee)
+declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee);
 
-	BEGIN
-	return;
-	END
 
-	INSERT INTO Leave(date_of_request, start_date, end_date)
-	VALUES(GETDATE(), @start_date, @end_date);
-	SELECT @leaveID = SCOPE_IDENTITY(); 
+-- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
+if @rank in (3,4)
+begin
+	if not exists (
+		-- select both dean and vice dean in the same departement
+		-- exclude the employee submitting the request and exclude the employees on leave
+		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+		inner join Role r on (er.role_name=r.role_name)
+		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee
+		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
+	) return
 
-	INSERT INTO Annual_Leave
-	VALUES(@leaveID, @employee, @replacement_emp); 
-		
-	IF EXISTS (
-		SELECT 1
-		FROM #tempEmpDetails
-		WHERE #tempEmpDetails.role_name IN ('Dean', 'Vice-dean')
-	)
-	BEGIN
-		IF EXISTS (
-			SELECT 1  
-			FROM #tempEmpDetails
-			WHERE #tempEmpDetails.role_name = 'Dean' -- requesting employee is dean
-			AND EXISTS (
-				SELECT 1
-				FROM Employee e
-				INNER JOIN Employee_Role er
-				ON er.emp_ID = e.employee_ID
-				WHERE e.dept_name = #tempEmpDetails.dept_name
-				AND er.role_name = 'Vice-dean' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1) 
-			)
+end
+
+-- assign replacement employee
+insert into Employee_Replace_Employee values(@employee, @replacement_emp, @start_date, @end_date)
+
+-- update the leave tables
+
+--			(date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+
+--		(request_id, employee_id, replacement_id)
+insert into Annual_Leave values(@request_id, @employee, @replacement_emp)
+
+
+-- if employee is in the HR departement
+if exists(
+	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+	where er.role_name like 'HR%'
+)
+begin
+	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR_Manager')
+
+	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
+	return
+end
+
+declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
+		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR%')
+
+-- todo: what happens if  the hr representative is on leave
+
+insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
+
+if @rank>=5 
+	begin
+		-- select employees in the same departement 
+		-- who have a rank of 3 or 4 (aka dean or vice dean) 
+		-- who is not on leave
+		-- dean takes priority over vice dean, i.e sort them by the rank ascending
+		declare @dean int = (
+			select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+			inner join Role r on (er.role_name=r.role_name)
+			where r.rank in (3,4) and dbo.Is_On_Leave(employee_ID, getdate(), getdate())=0 and dept_name=@dept_name
+			order by r.rank asc
 		)
-
-		BEGIN
-		return; --- dont submit if the vice dean is on leave
-		END
-
-		IF EXISTS (
-			SELECT 1  
-			FROM #tempEmpDetails
-			WHERE #tempEmpDetails.role_name = 'Vice-dean' -- requesting employee is vice dean
-			AND EXISTS (
-				SELECT 1
-				FROM Employee e
-				INNER JOIN Employee_Role er
-				ON er.emp_ID = e.employee_ID
-				WHERE e.dept_name = #tempEmpDetails.dept_name
-				AND er.role_name = 'Dean' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 1)
-			)
+		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@dean, @request_id)
+	end
+else 
+	begin
+		-- select employees with rank = 1 or 2 (president, vice president)
+		-- we have assumed that if the president is on leave, the request will be handled by the vice president
+		declare @president int = (
+			select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+			inner join Role r on (er.role_name=r.role_name)
+			where r.rank in (1,2) and dbo.Is_On_Leave(employee_ID, getdate(), getdate())=0
+			order by r.rank asc
 		)
-
-		BEGIN
-		return; --- dont submit if the dean is on leave
-		END
+		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@president, @request_id)
+	end
 	
-		SELECT top 1 @approves = er.emp_ID
-		FROM Employee_Role er
-		INNER JOIN Employee e
-		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name LIKE 'HR_Rep%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
-			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
-		ORDER BY NEWID(); --- select random hr representative
 
-		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
-		VALUES (@approves, @leaveID);
-
-		SELECT top 1 @approves= er.emp_ID
-		FROM Employee_Role er 
-		WHERE er.role_name = 'President' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0);
-
-		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
-		VALUES (@approves, @leaveID);
-
-		BEGIN
-		return;
-		END
-	END
-
-	-- hr employee
-	IF EXISTS (
-		SELECT 1  
-		FROM #tempEmpDetails
-		WHERE #tempEmpDetails.role_name LIKE 'HR%'
-	)
-	BEGIN
-		SELECT top 1 @approves = er.emp_ID
-		FROM Employee_Role er 
-		INNER JOIN Employee e
-		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name LIKE 'HR_Manager%' AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
-		ORDER BY NEWID(); --- select random hr manager
-
-		INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
-		VALUES (@approves, @leaveID);
-		
-		BEGIN
-		return;
-		END
-	END
-
-	-- not hr or dean or vice dean
-	SELECT top 1 @approves = er.emp_ID
-	FROM Employee_Role er
-	INNER JOIN Employee e
-	ON e.employee_ID = er.emp_ID
-	WHERE er.role_name LIKE 'HR_Representative%' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails)
-		 AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
-	ORDER BY NEWID(); --- select random hr representative
-
-	INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
-	VALUES (@approves, @leaveID);
-
-	IF EXISTS(
-		SELECT top 1 er.emp_ID
-		FROM Employee_Role er
-		INNER JOIN Employee e
-		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name = 'Dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) 
-			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0)
-	)
-	
-		SELECT top 1 @approves = er.emp_ID
-		FROM Employee_Role er
-		INNER JOIN Employee e
-		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name = 'Dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) 
-			AND (dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0);
-
-	ELSE
-
-		SELECT top 1 @approves = er.emp_ID
-		FROM Employee_Role er
-		INNER JOIN Employee e
-		ON e.employee_ID = er.emp_ID
-		WHERE er.role_name = 'Vice-dean' AND e.dept_name = (select top 1 #tempEmpDetails.dept_name from #tempEmpDetails) AND e.employment_status = 'active'
-	
-	INSERT INTO Employee_Approve_Leave(Emp1_ID, Leave_ID)
-	VALUES (@approves, @leaveID);
-
+end
 go
 
-
 -- 2.5) h
-create function Status_leaves() 
+create or alter function Status_leaves() 
 returns Table
 as 
 return (
@@ -291,7 +226,7 @@ go
 
 
 -- 2.5) i
-create proc Upperboard_approve_annual
+create or alter proc Upperboard_approve_annual
 @request_ID int, @Upperboard_ID int, @replacement_ID int
 as 
 begin
@@ -316,54 +251,18 @@ declare @employee_id int = (
     ) as six_sevennnnnn														-- BOI ts is soo tuff
 );
 
--- if replacement is on Accidental Leave
-if exists(
-	select * from Employee e inner join Accidental_Leave a on (e.employee_ID=a.emp_ID)
-	inner join Leave l on (a.request_ID = l.request_ID)
-
-	where e.employee_ID=@replacement_ID and l.end_date>=@start_date and l.start_date<=@end_date
-) set @status = 'rejected';
-
--- if replacement is on Compensation Leave
-if exists(
-	select * from Employee e inner join Compensation_Leave a on (e.employee_ID=a.emp_ID)
-	inner join Leave l on (a.request_ID = l.request_ID)
-
-	where e.employee_ID=@replacement_ID and l.end_date>=@start_date and l.start_date<=@end_date
-) set @status = 'rejected';
-
--- if replacement is on Medical Leave
-if exists(
-	select * from Employee e inner join Medical_Leave a on (e.employee_ID=a.emp_ID)
-	inner join Leave l on (a.request_ID = l.request_ID)
-
-	where e.employee_ID=@replacement_ID and l.end_date>=@start_date and l.start_date<=@end_date
-) set @status = 'rejected';
-
--- if replacement is on Unpaid Leave
-if exists(
-	select * from Employee e inner join Unpaid_Leave a on (e.employee_ID=a.emp_ID)
-	inner join Leave l on (a.request_ID = l.request_ID)
-
-	where e.employee_ID=@replacement_ID and l.end_date>=@start_date and l.start_date<=@end_date
-) set @status = 'rejected';
-
--- if replacement is on Annual Leave
-if exists(
-	select * from Employee e inner join Annual_Leave a on (e.employee_ID=a.emp_ID)
-	inner join Leave l on (a.request_ID = l.request_ID)
-
-	where e.employee_ID=@replacement_ID and l.end_date>=@start_date and l.start_date<=@end_date
-) set @status = 'rejected';
-
 
 declare @dept_1 int = (
 	select dept_name from Employee e where e.employee_ID=@replacement_ID
 );
-
 declare @dept_2 int = (
 	select dept_name from Employee e where e.employee_ID=@employee_id
 );
+
+if dbo.Is_On_Leave(@replacement_ID, @start_date, @end_date) = 1
+	set @status = 'rejected'
+if @dept_1 <> @dept_2
+	set @status = 'rejected'
 
 update Employee_Approve_Leave 
 set status = @status 
@@ -374,7 +273,7 @@ go
 
 
 -- 2.5) j
-create proc Submit_accidental
+create or alter proc Submit_accidental
 @employee int,
 @start_date date,
 @end_date date
@@ -766,19 +665,17 @@ End;
 Go
 
 --2.5 o)
-CREATE PROCEDURE Dean_andHR_Evaluation
+CREATE or alter PROCEDURE Dean_andHR_Evaluation
     @employee_ID INT,
     @rating INT,
     @comment VARCHAR(50),
     @semester CHAR(3)
 AS
 BEGIN
-    -- Validate rating range
-    IF (@rating < 1 OR @rating > 5)
-        RETURN;
 
     -- Insert the evaluation
     INSERT INTO Performance(rating, comments, semester, emp_ID)
     VALUES(@rating, @comment, @semester, @employee_ID);
 END;
 GO
+
