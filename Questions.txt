@@ -18,6 +18,9 @@ leave, or do we wait till the very end and check who approved the request?
 
 if its assigned previously, who will approve if the HR_Rep_MET is on leave?
 
+if it should be a pool of requests and each employee approves a bunch of leaves
+    what about the dr
+
 -- If the HR_MET_Representative is on leave and a TA from MET requests a leave, who will accept
 -- Do we treat pending status as accepted when checking who should approve the request
 
