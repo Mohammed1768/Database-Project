@@ -273,8 +273,8 @@ begin
 	drop view allEmployeeProfiles, NoEmployeeDept, allPerformance, allRejectedMedicals, allEmployeeAttendance
 	
 	-- 2.3
-	drop proc Update_Status_Doc, Remove_Deductions, Update_Employment_Status, 
-	Create_Holiday, Add_Holiday, Initiate_Attendance, Update_Attendance
+	drop proc Update_Status_Doc, Remove_Deductions, Update_Employment_Status, Create_Holiday, Add_Holiday, 
+	Initiate_Attendance, Update_Attendance, Remove_Holiday, Remove_DayOff, remove_approved_leaves, Replace_employee
 
 	-- 2.4
 	drop proc HR_approval_on_annual, HR_approval_on_accidental, HR_approval_an_acc, HR_approval_unpaid, 
