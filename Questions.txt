@@ -51,3 +51,8 @@
 
 -- 2.5 m) what does he mean memo document is submitted and a valid reason
 	what determines if its a valid reason + there is no reason attribute in Unpaid
+
+-- Who is the dr that approves the Medical Leave? or is it random
+
+-- How many dr's are there in the Medical department
+	can dr's be on leave
