@@ -267,7 +267,7 @@ begin
 	MyAttendance, Last_month_payroll, Deductions_Attendance, Is_On_Leave, Status_leaves
 
 	-- 2.1
-	drop proc createAllTables, dropAllTables, dropAllProceduresFunctionsViews, clearAllTables
+	drop proc createAllTables, dropAllTables, clearAllTables
 	
 	-- 2.2
 	drop view allEmployeeProfiles, NoEmployeeDept, allPerformance, allRejectedMedicals, allEmployeeAttendance
