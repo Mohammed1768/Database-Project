@@ -383,6 +383,9 @@ declare @request_id int = scope_identity()
 --		(request_id, employee_id, replacement_id)
 insert into Medical_Leave values(@request_id, @insurance_status, @disability_details, @type, @employee_ID)
 
+insert into Document(type, description, file_name, emp_ID, medical_ID) 
+	values('medical_document', @document_description, @file_name, @employee_ID, @request_id)
+
 -- get the id of the doctor
 declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%')
 
@@ -423,11 +426,20 @@ declare @rank int = (select min(rank) from Employee e inner join
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
 declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
-
+declare @duration int = day(@end_date - @start_date) + 1
 
 -- part time employees are not eligible 
 if (@type_of_contract='part_time')
 	return
+-- cannot request more than 30 dats
+if (@duration > 30)
+	return
+-- maximum one approved request per year
+if exists(
+	select * from Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID)
+	where u.Emp_ID=@employee_ID and year(l.end_date)=year(getdate()) and l.final_approval_status='approved'
+
+) return
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
@@ -442,12 +454,20 @@ begin
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) return
 
-
--- to do add the Employee_Approve_Leave heirarchy
-
 end
 
-	
+-- update the leave tables
+--			(date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+insert into Unpaid_Leave values(@request_id, @employee_ID)
+
+insert into Document(type, description, file_name, emp_ID, unpaid_ID) 
+	values('memo-document', @document_description, @file_name, @employee_ID, @request_id)
+
+
+
+
 
 end
 GO
