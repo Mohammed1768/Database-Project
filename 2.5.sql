@@ -481,7 +481,12 @@ Create Proc Upperboard_approve_unpaids
 	@Upperboard_ID int
 As
 Begin
-	
+	-- to be removed
+	create table a7a(id int);
+
+/*
+	Is it any employee in the UpperBoard?
+*/
 End;
 Go
 
