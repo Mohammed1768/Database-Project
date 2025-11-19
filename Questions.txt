@@ -58,3 +58,5 @@
 	can dr's be on leave
 
 -- Employees can have one unpaid leave per year, what if a leave overlaps in 2 years
+
+-- What does he mean by higher ranking employee, upper board department in unpaid leave

@@ -466,7 +466,10 @@ insert into Document(type, description, file_name, emp_ID, unpaid_ID)
 	values('memo-document', @document_description, @file_name, @employee_ID, @request_id)
 
 
-
+/*
+	to do 
+	assign employees who are required to approve the leave
+*/
 
 
 end
