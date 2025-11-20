@@ -13,18 +13,38 @@ go
 create or alter function HRLoginValidation(@employee_id int, @password varchar(50)) 
 returns bit as 
 begin	
-	if exists (select * from Employee where employee_ID = @employee_id and password=@password
-		and dept_name like 'HR%')
-		 return 1;
+	if exists (
+		select * from Employee where 
+		employee_ID = @employee_id and password=@password and dept_name like 'HR%'
+	)
+	return 1;
 	return 0;
 end;
 go
 
-
+-- helper for 2.4 b)
 create or alter proc HR_approval_on_annual 
 @request_ID int, @HR_ID int
 as
 begin
+
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
+
+
+-- if the request has been previously rejected
+if exists(
+	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
+)
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
 
 -- useful variables
 declare @num_days int = (select l.num_days from Leave l where l.request_ID = @request_ID);
@@ -43,24 +63,18 @@ declare @end_date date = (select l.end_date from Leave l where l.request_ID=@req
 if (@balance is null) return;
 
 
-declare @hr_status varchar(50) = 'approved'
+declare @final_status varchar(50) = 'approved'
 
 -- if insufficient leave balance
-if (@balance<@num_days) set @hr_status = 'rejected'; 
+if (@balance<@num_days) set @final_status = 'rejected'; 
 
-
-declare @final_status varchar(50) = @hr_status;
--- if it has been rejected previously (by a dean, president, etc..)
-if exists (
-	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected')
-set @final_status = 'rejected';
 
 update Leave 
 set final_approval_status = @final_status			
 where request_ID = @request_ID
 
 update Employee_Approve_Leave
-set status = @hr_status
+set status = @final_status
 where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
 if @final_status = 'approved'
@@ -72,17 +86,20 @@ end
 
 end
 go
--- this is line 67 in the IDE, we have reserved it for TUFFness
 
-
+-- helper for 2.4 b)
 create or alter proc HR_approval_on_accidental
 @request_ID int, @HR_ID int
 as
 begin
 
-declare @num_days int = (
-	select l.num_days from Leave l where l.request_ID = @request_ID
-);
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
+
+
 declare @employee_id int = (
 	select top 1 a.emp_ID from Accidental_Leave a
 	where a.request_ID = @request_ID
@@ -93,12 +110,12 @@ declare @balance int = (
 );
 
 -- request or employee does not exist in the table
-if (@balance is null) return;
+if (@balance is null) return
 
 
 -- if insufficient leave balance
 declare @hr_status varchar(50) = 'approved'
-if (@balance<@num_days) set @hr_status = 'rejected'; 
+if (@balance<1) set @hr_status = 'rejected'; 
 
 
 update Leave 
@@ -112,13 +129,12 @@ where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 if @hr_status = 'approved'
 begin
 	update Employee
-	set annual_balance = annual_balance - @num_days
+	set annual_balance = annual_balance - 1
 	where employee_ID=@employee_id
 end
 
 end
 go
-
 
 -- 2.4 b)
 create or alter proc HR_approval_an_acc 
@@ -132,20 +148,31 @@ exec HR_approval_on_accidental @request_id, @HR_ID;
 end
 go
 
-
 -- 2.4 c)
 create or alter proc HR_approval_unpaid 
 @request_ID int, @HR_ID int
 as 
 begin
-	
-declare @status varchar(50) = 'approved';
 
--- if the request has been previously rejected in the heirarchy
-if exists (
-	select * from Employee_Approve_Leave e where 
-	e.Leave_ID=@request_ID and e.status='rejected' 
-) set @status = 'rejected';
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
+
+
+-- if the request has been previously rejected
+if exists(
+	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
+)
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
+declare @status varchar(50) = 'approved';
 
 update Leave 
 set final_approval_status = @status
@@ -159,40 +186,52 @@ where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 end
 go
 
-
 -- 2.4 d)
 create or alter proc HR_approval_comp 	
 @request_ID int, @HR_ID int
 as 
 begin
 
+
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
+
+
+-- if the request has been previously rejected
+if exists(
+	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
+)
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
+-- useful variables
 declare @emp_id int = (select top 1 e.employee_ID from Employee e 
 						 inner join Compensation_Leave c on (c.emp_ID = e.employee_ID)
 							where c.request_ID = @request_ID);
 
-
-declare @day_off varchar(50) = (select top 1 e.official_day_off from Employee e where e.employee_ID = @emp_id); 
-
 declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID); 
+declare @day_off varchar(50) = (select official_day_off from Employee where employee_ID=@emp_id)
+declare @date_of_original_work_day date = (select date_of_original_work_day from Compensation_Leave where request_ID=@request_ID)
 
--- number of extra days the employee has worked
-declare @no_days int = (
-	select count(*) from Attendance a where datepart(hour, @date)>=8 and
-	month(a.date) = month(@date) and year(a.date) = year(@date) and 
-	@day_off = datename(weekday, a.date)
-);
+declare @status varchar(50) = 'approved'
 
--- number of compensation leaves the employee took
-declare @previous_leaves int = (
-	select count(*) from Compensation_Leave c inner join Leave l on (c.request_ID = l.request_ID) 
-	where month(l.start_date) = month(@date) and year(l.start_date)=year(@date)
-	and l.final_approval_status='approved'
-);
+-- if employee took another compensation leave using the same day off
+if exists(
+	select * from Compensation_Leave 
+	where request_ID<>@request_ID and date_of_original_work_day=@date
+) set @status = 'rejected'
 
-declare @status varchar(50) = 'approved';
 
-if (@no_days <= @previous_leaves) set @status = 'rejected';
-
+-- if date_of_original_workday is not the employee's day off
+if (datename(WEEKDAY, @date_of_original_work_day) <> @day_off)
+set @status = 'rejected'
 
 update Leave 
 set final_approval_status = @status
@@ -279,7 +318,7 @@ begin
 			where e.employee_ID = @employee_ID) / 22;
 
 
-	-- BOI ts is soo tuff
+	-- ts is soo tuff
 	create table #very_cool_tmp_table_67(unpaid_id int, start_date date, end_date date, cost decimal(10,2));
 
 	-- insert all the leaves that overlap with the current month into the 67 table
@@ -336,7 +375,6 @@ begin
 
 end
 go
-
 
 -- 2.4 i)
 create or alter proc Add_Payroll

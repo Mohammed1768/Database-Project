@@ -1,0 +1,16 @@
+
+
+-- Can an employee replace more than one employee?
+    i.e if im applying to replace folan, should i check if im already replacing another employee
+
+-- If submitting an invalid request do we populate the request tables or just skip it
+-- do we also forward the request to employees supposed to approve?
+
+-- How do we handle Upperboard_approve_Annual/HR_approve_annual if they are not in the table
+
+-- Who is the upper board in medical leave
+
+-- What if the employee who is supposed to approve the leave is on leave
+
+-- Unpaid leave: If we request 2 unpaid leaves per year
+    do we automatically reject the second one or wait till the HR recieves it to reject

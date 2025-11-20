@@ -31,7 +31,7 @@ Return
 );
 Go
 
--- 2.5 c): Assumed that admin removes unattended official day off records from Attendance table(2.3 i)
+-- 2.5 c)
 Create or alter Function MyAttendance(@employee_ID Int)
 Returns Table
 As 
@@ -78,7 +78,6 @@ create or alter function Is_On_Leave
 returns bit
 AS
 begin
-	declare @result bit
 	IF  EXISTS ( 
 		select * from Leave L
 		WHERE 
@@ -95,40 +94,58 @@ begin
 				UNION
 				SELECT request_ID FROM Compensation_Leave WHERE emp_ID = @employee_ID
 			)
-		)
+	)	return 1
+	return 0
 
-		set @result = 1
-	ELSE
-		set @result = 0
-
-	return @result
 end
 go
 
 -- 2.5) g
 create or alter proc Submit_annual
-@employee int,
+@employee_id int,
 @replacement_emp int,
 @start_date date,
 @end_date date
 as
 begin
 
--- if employee is part time: do not consider the request
+
+-- update the leave tables
+--			(date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+--		(request_id, employee_id, replacement_id)
+insert into Annual_Leave values(@request_id, @employee_id, @replacement_emp)
+
+
+-- if invalid request
+if (@start_date>@end_date) 
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
+-- if employee is part time
 if exists (
 	select * from Employee where type_of_contract='part_time'
-	and employee_ID=@employee
-) return
+	and employee_ID=@employee_id
+) begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
 
 
 -- useful variables
 declare @rank int = (select min(rank) from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee)
-declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee);
+	where employee_ID=@employee_id)
+declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
 
 
--- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
+-- if dean is submitting a request while vice dean is on leave, automatically reject the request and vice versa
 if @rank in (3,4)
 begin
 	if not exists (
@@ -136,23 +153,14 @@ begin
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee
+		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_id
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
-	) return
-
+	) begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 end
-
--- assign replacement employee
-insert into Employee_Replace_Employee values(@employee, @replacement_emp, @start_date, @end_date)
-
--- update the leave tables
-
---			(date_of_request, start_date, end_date, final_approval_status)
-insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
-declare @request_id int = scope_identity()
-
---		(request_id, employee_id, replacement_id)
-insert into Annual_Leave values(@request_id, @employee, @replacement_emp)
 
 
 -- if employee is in the HR departement
@@ -161,20 +169,21 @@ if exists(
 	where er.role_name like 'HR%'
 )
 begin
+	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
-			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR_Manager')
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
 	return
 end
 
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR%')
+		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR_Rep%')
 
--- todo: what happens if  the hr representative is on leave
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
+-- if employee is a lecturer of a TA
 if @rank>=5 
 	begin
 		-- select employees in the same departement 
@@ -202,7 +211,6 @@ else
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@president, @request_id)
 	end
 	
-
 end
 go
 
@@ -227,6 +235,13 @@ create or alter proc Upperboard_approve_annual
 as 
 begin
 
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@Upperboard_ID and Leave_ID=@request_ID
+) return
+
+
 declare @status varchar(50) = 'approved';
 
 declare @start_date date = (select start_date from Leave where request_ID = @request_ID);
@@ -244,7 +259,7 @@ declare @employee_id int = (
         select emp_ID from Medical_Leave where request_ID = @request_id
 								UNION 
         select emp_ID from Unpaid_Leave where request_ID = @request_id
-    ) as six_sevennnnnn														-- BOI ts is soo tuff
+    ) as six_sevennnnnn														-- ts is soo tuff
 );
 
 
@@ -262,27 +277,40 @@ if @dept_1 <> @dept_2
 
 update Employee_Approve_Leave 
 set status = @status 
-where Leave_ID=@request_ID;
+where Leave_ID=@request_ID and Emp1_ID=@Upperboard_ID;
 
 end
 go
 
 -- 2.5) j
 create or alter proc Submit_accidental
-@employee int,
+@employee_id int,
 @start_date date,
 @end_date date
 as
 begin
+
+--		Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+
+--		(request_id, employee_id)
+insert into Accidental_Leave values(@request_id, @employee_id)
+
+-- if invalid request
 -- if duration is greater than 1 day skip the request
-IF (DATEDIFF(day, @start_date, @end_date) + 1 > 1) 
-	return;
+if (@start_date>@end_date or DATEDIFF(day,@start_date,@end_date)+1 > 1) 
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 -- useful variables
 declare @rank int = (select min(rank) from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee)
-declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee);
+	where employee_ID=@employee_id)
+declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
@@ -293,26 +321,23 @@ begin
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee
+		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_id
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
-	) return
-
+	) 
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 end
 
 
---			Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
-insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
-declare @request_id int = scope_identity()
 
---		(request_id, employee_id)
-insert into Accidental_Leave values(@request_id, @employee)
-
-
-declare @departement varchar(50) = (select dept_name from Employee where employee_ID=@employee);	-- departement the employee works in
+declare @departement varchar(50) = (select dept_name from Employee where employee_ID=@employee_id);	-- departement the employee works in
 
 declare @role_name varchar(50);												-- role of the employee who will approve the request
 if @departement like 'HR%'		-- employee is in the HR departement
-	set @role_name = 'HR_Manager';
+	set @role_name = 'HR Manager';
 else 
 	set @role_name = concat('HR_Representative_', @departement) 
 
@@ -341,6 +366,24 @@ AS
 begin
 
 
+-- update the leave tables
+--			(date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+
+--		(request_id, insurance status, disability details, type, employee_id)
+insert into Medical_Leave values(@request_id, @insurance_status, @disability_details, @type, @employee_ID)
+insert into Document(type, description, file_name, emp_ID, medical_ID) 
+	values('Medical', @document_description, @file_name, @employee_ID, @request_id)
+
+
+if (@start_date>@end_date)
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
 -- useful variables
 declare @rank int = (select min(rank) from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
@@ -360,26 +403,27 @@ begin
 		inner join Role r on (er.role_name=r.role_name)
 		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_ID
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
-	) return
-
+	) begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 end
 
 -- male and part time employees cannot submit maternity leaves
-if (@type='maternity' and @gender='m')
+if (@type='maternity' and @gender='M')
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
 	return
+end
 if (@type='maternity' and @type_of_contract='part_time')
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
 	return
+end
 
--- update the leave tables
---			(date_of_request, start_date, end_date, final_approval_status)
-insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
-declare @request_id int = scope_identity()
-
---		(request_id, employee_id, replacement_id)
-insert into Medical_Leave values(@request_id, @insurance_status, @disability_details, @type, @employee_ID)
-
-insert into Document(type, description, file_name, emp_ID, medical_ID) 
-	values('medical_document', @document_description, @file_name, @employee_ID, @request_id)
 
 -- get the id of the doctor
 declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%')
@@ -414,6 +458,24 @@ CREATE or alter proc Submit_unpaid
 AS
 begin
 
+-- update the leave tables
+--			(date_of_request, start_date, end_date, final_approval_status)
+insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
+declare @request_id int = scope_identity()
+insert into Unpaid_Leave values(@request_id, @employee_ID)
+
+insert into Document(type, description, file_name, emp_ID, unpaid_ID) 
+	values('Memo', @document_description, @file_name, @employee_ID, @request_id)
+
+
+if (@start_date>@end_date)
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
+
 -- useful variables
 declare @rank int = (select min(rank) from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
@@ -425,16 +487,29 @@ declare @duration int = datediff(day, @start_date, @end_date) + 1
 
 -- part time employees are not eligible 
 if (@type_of_contract='part_time')
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
 	return
+end
 -- cannot request more than 30 dats
 if (@duration > 30)
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
 	return
+end
 -- maximum one approved request per year
 if exists(
 	select * from Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID)
-	where u.Emp_ID=@employee_ID and year(l.end_date)=year(getdate()) and l.final_approval_status='approved'
+	where u.Emp_ID=@employee_ID and (year(l.end_date)=year(getdate()) or year(l.start_date)=year(getdate()))
+	and l.final_approval_status='approved'
+) begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
-) return
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
@@ -448,24 +523,48 @@ begin
 		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_ID
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) return
-
 end
 
--- update the leave tables
---			(date_of_request, start_date, end_date, final_approval_status)
-insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
-declare @request_id int = scope_identity()
-insert into Unpaid_Leave values(@request_id, @employee_ID)
 
-insert into Document(type, description, file_name, emp_ID, unpaid_ID) 
-	values('memo-document', @document_description, @file_name, @employee_ID, @request_id)
+-- upper board employee
+-- higher ranking have higher priority
+declare @upper_board int = (
+	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+	inner join Role r on (r.role_name = er.role_name)
+	where r.role_name like 'Upper%' and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
+	order by r.rank asc
+) 
+insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
 
-/*
-	to do 
-	assign employees who are required to approve the leave
-*/
+declare @role_name varchar(50);									-- role of the hr employee who will approve the request
+if @dept_name like 'HR%'		-- employee is in the HR departement
+	set @role_name = 'HR Manager';
+else 
+	set @role_name = concat('HR_Representative_', @dept_name) 
 
+-- get the id of the employee with the the above role
+declare @hr_employee int = (
+	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
+	where role_name = @role_name
+)
+
+insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
+
+
+-- if the employee submitting the request is a TA or a doctor
+if @rank > 5
+begin
+	
+	declare @higher_ranking int = (
+		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+		inner join Role r on (r.role_name = er.role_name) 
+		where r.rank<@rank and e.dept_name=@dept_name
+		order by r.rank asc
+	)
+	insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
+
+end
 
 end
 GO
@@ -476,12 +575,27 @@ Create or alter Proc Upperboard_approve_unpaids
 	@Upperboard_ID int
 As
 Begin
-	-- to be removed
-	create table a7a(id int);
-/*
-	Question:
-	Is it any employee in the UpperBoard or is it previously specified?
-*/
+
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@Upperboard_ID and Leave_ID=@request_ID
+) return
+
+declare @status varchar(50) = 'approved'
+
+-- just check if a memo document exists
+if not exists(
+	select d.document_ID from Leave l inner join Unpaid_Leave u on (l.request_ID = u.request_ID)
+	inner join Document d on (d.unpaid_ID=u.request_ID) 
+	where l.request_ID=@request_ID and d.type='Memo'
+) set @status = 'rejected'
+
+-- update the acceptance status
+update Employee_Approve_Leave 
+set status = @status
+where @request_ID=Leave_ID and @Upperboard_ID=Emp1_ID
+
 End;
 Go
 
@@ -494,9 +608,6 @@ Create or alter Proc Submit_compensation
 	@replacement_emp Int 
 As
 Begin
-	-- Will skip the Comensation Leave submission if they are not in the same month.
-	If (Month(@compensation_date) <> Month(@date_of_original_workday))
-		Return;
 	
 	--Inserting leave request into its tables
 	Insert Into Leave (date_of_request, start_date, end_date) 
@@ -505,6 +616,15 @@ Begin
 
 	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_work_day, reason, replacement_emp_ID)
 	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
+
+
+	-- Will skip the Comensation Leave submission if they are not in the same month.
+	If (Month(@compensation_date) <> Month(@date_of_original_workday))
+		begin 
+			update Leave
+			set final_approval_status='rejected' where request_ID=@leaveID
+			return
+		end
 
 	--Inserting into this table as compensation leave requires a replacement of employee
 	Insert Into Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date) --Emp2 replaces Emp1
