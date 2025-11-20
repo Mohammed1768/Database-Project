@@ -47,7 +47,8 @@ begin
 		CHECK (accidental_balance>=0),
 		CHECK (type_of_contract IN ('full_time', 'part_time')),
 		CHECK (employment_status IN ('active', 'onleave', 'notice_period','resigned')),
-		CHECK (hire_date<=last_working_date)
+		CHECK (hire_date<=last_working_date),
+		CHECK (gender in ('M', 'F'))
 	);
 
 	create table Employee_Phone (
