@@ -58,6 +58,7 @@ declare @balance int = (
 );
 declare @start_date date = (select l.start_date from Leave l where l.request_ID=@request_ID);
 declare @end_date date = (select l.end_date from Leave l where l.request_ID=@request_ID);
+declare @replacement_emp int = (select top 1 replacement_emp_ID from Compensation_Leave where request_id=@request_ID)
 
 -- request or employee does not exist in the table
 if (@balance is null) return;
@@ -82,6 +83,8 @@ begin
 	update Employee
 	set annual_balance = annual_balance - @num_days
 	where employee_ID=@employee_id
+
+	insert into Employee_Replace_Employee values(@employee_id, @replacement_emp, @start_date, @end_date)
 end
 
 end
@@ -219,6 +222,7 @@ declare @emp_id int = (select top 1 e.employee_ID from Employee e
 declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID); 
 declare @day_off varchar(50) = (select official_day_off from Employee where employee_ID=@emp_id)
 declare @date_of_original_work_day date = (select date_of_original_work_day from Compensation_Leave where request_ID=@request_ID)
+declare @replacement_emp int = (select top 1 replacement_emp_ID from Compensation_Leave where request_id=@request_ID)
 
 declare @status varchar(50) = 'approved'
 
@@ -240,6 +244,9 @@ where request_ID = @request_ID
 update Employee_Approve_Leave
 set status = @status
 where Leave_ID=@request_ID and Emp1_ID=@HR_ID
+
+if @status='approved'
+insert into Employee_Replace_Employee values(@emp_id, @replacement_emp, @date, @date)
 
 
 end
@@ -314,7 +321,7 @@ begin
 	-- useful variables
 	declare @CurrentMonthStart date = datefromparts(year(getdate()), month(getdate()), 1);
     declare @CurrentMonthEnd   date = eomonth(getdate());
-		declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
 			where e.employee_ID = @employee_ID) / 22;
 
 
@@ -326,7 +333,7 @@ begin
 	select u.request_ID, l.start_date, l.end_date from 
 	Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID) WHERE 
 		l.start_date <= @CurrentMonthEnd and l.end_date >= @CurrentMonthStart
-		and @employee_ID = u.Emp_ID;
+		and @employee_ID = u.Emp_ID and l.final_approval_status='approved';
 
 	-- we will only consider the part that overlap in our current month
 	update #very_cool_tmp_table_67
@@ -386,7 +393,7 @@ begin
 declare @bonus decimal(10,2) = dbo.Bonus_amount(@employee_id)	
 declare @deduction_amount decimal(10,2) = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
 
-declare @salary decimal(10,2)= (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
+declare @salary decimal(10,2) = (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
 
 -- payment_date, final_salary_amount, from_date, to_date, comments, bonus_amount, deduction_amount, emp_ID
 insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus_amount, deductions_amount, emp_ID) 
@@ -395,3 +402,5 @@ insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus
 end
 
 go
+
+

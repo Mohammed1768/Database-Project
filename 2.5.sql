@@ -626,9 +626,6 @@ Begin
 			return
 		end
 
-	--Inserting into this table as compensation leave requires a replacement of employee
-	Insert Into Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date) --Emp2 replaces Emp1
-	Values (@employee_ID, @replacement_emp, @compensation_date, @compensation_date)
 
 	--Departement of the employee
 	Declare @departement Varchar(50) = (Select top 1 dept_name From Employee e Where e.employee_ID=@employee_ID)
