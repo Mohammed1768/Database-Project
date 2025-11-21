@@ -58,6 +58,7 @@ declare @balance int = (
 );
 declare @start_date date = (select l.start_date from Leave l where l.request_ID=@request_ID);
 declare @end_date date = (select l.end_date from Leave l where l.request_ID=@request_ID);
+declare @replacement_emp int = (select top 1 replacement_emp_ID from Compensation_Leave where request_id=@request_ID)
 
 -- request or employee does not exist in the table
 if (@balance is null) return;
@@ -82,6 +83,8 @@ begin
 	update Employee
 	set annual_balance = annual_balance - @num_days
 	where employee_ID=@employee_id
+
+	insert into Employee_Replace_Employee values(@employee_id, @replacement_emp, @start_date, @end_date)
 end
 
 end
@@ -219,6 +222,7 @@ declare @emp_id int = (select top 1 e.employee_ID from Employee e
 declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID); 
 declare @day_off varchar(50) = (select official_day_off from Employee where employee_ID=@emp_id)
 declare @date_of_original_work_day date = (select date_of_original_work_day from Compensation_Leave where request_ID=@request_ID)
+declare @replacement_emp int = (select top 1 replacement_emp_ID from Compensation_Leave where request_id=@request_ID)
 
 declare @status varchar(50) = 'approved'
 
@@ -240,6 +244,9 @@ where request_ID = @request_ID
 update Employee_Approve_Leave
 set status = @status
 where Leave_ID=@request_ID and Emp1_ID=@HR_ID
+
+if @status='approved'
+insert into Employee_Replace_Employee values(@emp_id, @replacement_emp, @date, @date)
 
 
 end
