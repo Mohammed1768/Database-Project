@@ -1,126 +1,143 @@
-﻿
--- بسم الله الرحمن الرحيم
+﻿-- بسم الله الرحمن الرحيم
 
 /*   /\_/\
 *   (= ._.)
 *   / >  \>
 */
 
-
-create database University_HR_ManagementSystem_Team_No1;
-use University_HR_ManagementSystem_Team_No1;
-go;
+use University_HR_ManagementSystem_Team_No_12;
+go
 
 
 -- 2.4 a)
-create function HRLoginValidation(@employee_id int, @password varchar(50)) 
+create or alter function HRLoginValidation(@employee_id int, @password varchar(50)) 
 returns bit as 
 begin	
-	if exists (select * from Employee where employee_ID = @employee_id and password=@password)
-		 return 1;
+	if exists (
+		select * from Employee where 
+		employee_ID = @employee_id and password=@password and dept_name like 'HR%'
+	)
+	return 1;
 	return 0;
 end;
-go;
-
-
-create proc HR_approval_on_annual 
-@request_ID int, @HR_ID int
-as
-begin
-
-declare @status bit = 1
-declare @num_days int = (
-	select l.num_days from Leave l where l.request_ID = @request_ID
-);
-
-declare @balance int = (
-	select top 1 annual_balance from Employee e inner join Annual_Leave a on (e.employee_ID = a.emp_ID)
-	where a.request_ID = @request_ID
-);
-
-declare @employee_id int = (
-	select top 1 a.emp_ID from Annual_Leave a
-	where a.request_ID = @request_ID
-);
-
--- request or employee does not exist in the table
-if (@balance is null) return;
-
-
--- if insufficient leave balance
-if (@balance<@num_days) set @status = 0;
-
-if (@status = 1) insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'approved'); 
-else insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'rejected'); 
-
-
--- if it has been rejected previously (by a dean, president, etc..)
-if exists (
-	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected')
-set @status = 0;
-
-declare @approval varchar(30) = case 
-    when @status = 1 then 'approved'
-    else 'rejected'
-end
-
-
-update Leave 
-set final_approval_status = case when
-@status = 1 then 'approved'
-    else 'rejected'
-end
-
-end
 go
 
-
-create proc HR_approval_on_accidental
+-- helper for 2.4 b)
+create or alter proc HR_approval_on_annual 
 @request_ID int, @HR_ID int
 as
 begin
 
-declare @status bit = 1
-declare @num_days int = (
-	select l.num_days from Leave l where l.request_ID = @request_ID
-);
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
 
-declare @balance int = (
-	select top 1 accidental_balance from Employee e inner join Accidental_Leave a on (e.employee_ID = a.emp_ID)
-	where a.request_ID = @request_ID
-);
 
+-- if the request has been previously rejected
+if exists(
+	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
+)
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
+-- useful variables
+declare @num_days int = (select l.num_days from Leave l where l.request_ID = @request_ID);
 declare @employee_id int = (
 	select top 1 a.emp_ID from Annual_Leave a
 	where a.request_ID = @request_ID
 );
+declare @balance int = (
+	select top 1 annual_balance from Employee e
+	where e.employee_ID = @employee_id
+);
+declare @start_date date = (select l.start_date from Leave l where l.request_ID=@request_ID);
+declare @end_date date = (select l.end_date from Leave l where l.request_ID=@request_ID);
 
 -- request or employee does not exist in the table
 if (@balance is null) return;
 
 
+declare @final_status varchar(50) = 'approved'
+
 -- if insufficient leave balance
-if (@balance<@num_days) set @status = 0;
+if (@balance<@num_days) set @final_status = 'rejected'; 
 
-if (@status = 1) insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'approved'); 
-else insert into Employee_Approve_Leave values(@employee_id, @request_ID, 'rejected'); 
-
-declare @approval varchar(30) = case 
-    when @status = 1 then 'approved'
-    else 'rejected'
-end
 
 update Leave 
-set final_approval_status = @approval
+set final_approval_status = @final_status			
 where request_ID = @request_ID
 
+update Employee_Approve_Leave
+set status = @final_status
+where Leave_ID=@request_ID and Emp1_ID=@HR_ID
+
+if @final_status = 'approved'
+begin
+	update Employee
+	set annual_balance = annual_balance - @num_days
+	where employee_ID=@employee_id
+end
+
 end
 go
 
+-- helper for 2.4 b)
+create or alter proc HR_approval_on_accidental
+@request_ID int, @HR_ID int
+as
+begin
 
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
+
+
+declare @employee_id int = (
+	select top 1 a.emp_ID from Accidental_Leave a
+	where a.request_ID = @request_ID
+);
+declare @balance int = (
+	select top 1 accidental_balance from Employee e
+	where e.employee_ID = @employee_id
+);
+
+-- request or employee does not exist in the table
+if (@balance is null) return
+
+
+-- if insufficient leave balance
+declare @hr_status varchar(50) = 'approved'
+if (@balance<1) set @hr_status = 'rejected'; 
+
+
+update Leave 
+set final_approval_status = @hr_status
+where request_ID = @request_ID
+
+update Employee_Approve_Leave
+set status = @hr_status
+where Leave_ID=@request_ID and Emp1_ID=@HR_ID
+
+if @hr_status = 'approved'
+begin
+	update Employee
+	set annual_balance = annual_balance - 1
+	where employee_ID=@employee_id
+end
+
+end
+go
 
 -- 2.4 b)
-create proc HR_approval_an_acc 
+create or alter proc HR_approval_an_acc 
 @request_ID int, @HR_ID int
 as 
 begin
@@ -129,108 +146,126 @@ exec HR_approval_on_annual @request_id, @HR_ID;
 exec HR_approval_on_accidental @request_id, @HR_ID;
 
 end
-go;
-
+go
 
 -- 2.4 c)
-create proc HR_approval_unpaid 
+create or alter proc HR_approval_unpaid 
 @request_ID int, @HR_ID int
 as 
 begin
-	
-declare @hr_representative bit = 0;
-declare @higher_rank bit = 0;
-declare @upper_board bit = 0;
+
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
 
 
-declare @rank int = (
-	select top 1 r.rank from Employee_Role e inner join Unpaid_Leave u on (e.emp_ID = u.Emp_ID)
-	inner join Role r on (e.role_name = r.role_name)
-	where @request_ID = u.request_ID 
-);
+-- if the request has been previously rejected
+if exists(
+	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
+)
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
 
--- if the request is approved by an employee with a higher rank
-if (
-	exists (select * from Employee_Approve_Leave e inner join Employee_Role er on (e.Emp1_ID = er.emp_ID) 
-			inner join Role r on (er.role_name = r.role_name)
-			where e.Leave_ID=@request_ID and r.rank<@rank)
-) set @higher_rank = 1;
+declare @status varchar(50) = 'approved';
 
-declare @status int = 0
+update Leave 
+set final_approval_status = @status
+where request_ID = @request_ID
 
-if (
-	exists()
-) set @status = 1;
+update Employee_Approve_Leave
+set status = @status
+where Leave_ID=@request_ID and Emp1_ID=@HR_ID
+
 
 end
-go;
-
+go
 
 -- 2.4 d)
-create proc HR_approval_comp 	
+create or alter proc HR_approval_comp 	
 @request_ID int, @HR_ID int
 as 
 begin
-	
-	declare @emp_id int =	(select top 1 e.employee_ID from Employee e 
-							inner join Compensation_Leave c on (c.emp_ID = e.employee_ID)
+
+
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
+) return
+
+
+-- if the request has been previously rejected
+if exists(
+	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
+)
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
+-- useful variables
+declare @emp_id int = (select top 1 e.employee_ID from Employee e 
+						 inner join Compensation_Leave c on (c.emp_ID = e.employee_ID)
 							where c.request_ID = @request_ID);
 
+declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID); 
+declare @day_off varchar(50) = (select official_day_off from Employee where employee_ID=@emp_id)
+declare @date_of_original_work_day date = (select date_of_original_work_day from Compensation_Leave where request_ID=@request_ID)
 
-	declare @day_off varchar(50) = (select top 1 e.official_day_off from Employee e where e.employee_ID = @emp_id); 
+declare @status varchar(50) = 'approved'
 
-	declare @status bit = case when exists(
-		select * from Attendance a where a.emp_ID=@emp_id
-		and a.status='attended' and 
-		datename(WEEKDAY, a.date) = @day_off 
-		and month(a.date) = month(getdate()) and a.total_duration >= 8
-	) then 1 else 0 end; 
+-- if employee took another compensation leave using the same day off
+if exists(
+	select * from Compensation_Leave 
+	where request_ID<>@request_ID and date_of_original_work_day=@date
+) set @status = 'rejected'
 
-	
 
-	update Employee_Approve_Leave
-	set status = case 
-		when @status = 1 then 'approved'
-		else 'rejected'
-	end
-	where Emp1_ID = @HR_ID and Leave_ID = @request_ID;
+-- if date_of_original_workday is not the employee's day off
+if (datename(WEEKDAY, @date_of_original_work_day) <> @day_off)
+set @status = 'rejected'
 
-	update Leave
-	set final_approval_status = case 
-		when @status = 1 then 'approved'
-		else 'rejected'
-	end
-	where request_ID = @request_ID;
+update Leave 
+set final_approval_status = @status
+where request_ID = @request_ID
+
+update Employee_Approve_Leave
+set status = @status
+where Leave_ID=@request_ID and Emp1_ID=@HR_ID
+
+
 end
-go;
-
+go
 
 -- 2.4 e)
-create proc Deduction_hours	
+create or alter proc Deduction_hours	
 @employee_ID int
 as 
 begin
-	declare @hours int, @rate decimal(10,2), @attendance int
 
-	-- base salary hourly rate = salary / (22 days * 8 hours)
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / (22 * 8);		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
+	-- hourly rate = salary / (22 days * 8 hours)
 
-
-	set @rate = @base_salary * (1 +  @years * 0.01);
+	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
+		where e.employee_ID = @employee_ID) / (22 * 8);	
 		
-	set @hours = (
-		select sum(total_duration) from Attendance a 
+	declare @seconds int = (
+		select sum(datediff(second, '00:00:00', total_duration)) from Attendance a 
 		where
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
-	);
+	); 
+	declare @hours int = @seconds / (60 * 60);
 
-	set @attendance = (
+	declare @attendance int = (
 		select top 1 attendance_ID from Attendance a
-		where total_duration < 8 and 
+		where datepart(hour, a.total_duration) < 8 and 
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 		order by a.date asc
 	);
@@ -242,23 +277,16 @@ begin
 	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
 		values(@employee_ID, getdate(), ((22 * 8) - @hours)*@rate, 'missing_hours', 'finalized', @attendance);
 end
-go;
-
+go
 
 -- 2.4 f)
-create proc Deduction_days	
+create or alter proc Deduction_days	
 @employee_ID int
 as 
 begin
 
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / 22;		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-
-	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+			where e.employee_ID = @employee_ID) / 22;
 	
 	-- delete all previously added deductions from the current month
 	delete from Deduction where
@@ -266,139 +294,104 @@ begin
 		 month(date)=month(getdate()) and year(date)=year(getdate());
 
 
-		-- Deduction(emp_ID, date, amount, type, status, unpaid_ID, attendance_ID)
+	--			Deduction(emp_ID, date, amount, type, status, unpaid_ID, attendance_ID)
 	insert into Deduction(emp_ID, date, amount, type, status)
-		select @employee_ID, datefromparts(year(getdate()), month(getdate()), a.date), 
+		select @employee_ID, datefromparts(year(getdate()), month(getdate()), day(a.date)), 
 			@daily_rate, 'missing_days', 'finalized' 
 		from Attendance a
 		where month(a.date) = month(getdate()) and year(a.date)=year(getdate())
 			and a.status = 'absent' and a.emp_ID = @employee_ID; 
 
 end
-go;
+go
 
 -- 2.4 g)
-create proc Deduction_unpaid	
+create or alter proc Deduction_unpaid	
 @employee_ID int
 as 
 begin
+	
+	-- useful variables
 	declare @CurrentMonthStart date = datefromparts(year(getdate()), month(getdate()), 1);
     declare @CurrentMonthEnd   date = eomonth(getdate());
+		declare @daily_rate decimal(10,2) = (select top 1 salary from Employee e	
+			where e.employee_ID = @employee_ID) / 22;
 
 
-	create table #very_cool_tmp_table_67(start_date date, end_date date, duration int);
+	-- ts is soo tuff
+	create table #very_cool_tmp_table_67(unpaid_id int, start_date date, end_date date, cost decimal(10,2));
 
-	-- all the leaves that overlap with the current month
-	insert into #very_cool_tmp_table_67 (start_date, end_date)
-	select l.start_date, l.end_date from 
+	-- insert all the leaves that overlap with the current month into the 67 table
+	insert into #very_cool_tmp_table_67 (unpaid_id, start_date, end_date)
+	select u.request_ID, l.start_date, l.end_date from 
 	Unpaid_Leave u inner join Leave l on (u.request_ID = l.request_ID) WHERE 
 		l.start_date <= @CurrentMonthEnd and l.end_date >= @CurrentMonthStart
 		and @employee_ID = u.Emp_ID;
 
+	-- we will only consider the part that overlap in our current month
 	update #very_cool_tmp_table_67
 		set start_date = @CurrentMonthStart 
 		where start_date < @CurrentMonthStart;
-
 	update #very_cool_tmp_table_67
 		set end_date = @CurrentMonthEnd 
 		where end_date > @CurrentMonthEnd;
 
+	-- calculate the cost
 	update #very_cool_tmp_table_67
-		set duration = end_date - start_date;
-		
-	
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / 22;		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
+		set cost = day(end_date - start_date + 1) * @daily_rate;
 
-	declare @daily_rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
-
-
-	declare @count int = (select sum(duration) from #very_cool_tmp_table_67);
 
 	insert into Deduction(emp_ID, date, amount, type, status, unpaid_ID) 
-		values(@employee_ID, getdate(), @daily_rate * @count, 'unpaid', 'finalized');
+		select @employee_ID, cast(getdate() as date), cost, 'unpaid', 'finalized', unpaid_id
+		from #very_cool_tmp_table_67;
 
 	
 end
-go;
+go
 
 -- 2.4 h)
-create function Bonus_amount(@employee_id int)
+create or alter function Bonus_amount(@employee_id int)
 returns int as 
 begin
 
-	declare @count int = (
-		select sum(total_duration) from Attendance a
+	declare @seconds int = (
+		select sum(datediff(second, '00:00:00', total_duration)) from Attendance a 
 		where
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
-	);
+	); 
+	declare @hours int = @seconds / (60 * 60);
 
-	declare @base_salary decimal(10,2)= (select top 1 salary from Employee e	
-		where e.employee_ID = @employee_ID) / (22 * 8);		
-	
-	declare @years int = (select top 1 e.years_of_experience from Employee e 
-		where e.employee_ID = @employee_ID);
-
-	declare @rate decimal(10,2) = @base_salary * (1 + @years * 0.01);
+	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
+									where e.employee_ID = @employee_ID) / (22 * 8)
 
 	declare @factor int = 
 			(select top 1 r.percentage_overtime from Role r, Employee e, Employee_Role er where	
 			@employee_id = e.employee_ID and @employee_id=er.emp_ID and r.role_name=er.role_name
 			order by r.rank asc);
 
-	declare @bonus int = (@count - 22*8) * @rate * @factor * 0.01;
+	declare @bonus int = (@hours - 22*8) * @rate * @factor * 0.01;
 	if (@bonus <= 0) return 0;
 	return @bonus;
 
 end
-go;
-
-
+go
 
 -- 2.4 i)
-
-/* 
-* we are going to assume that the from and to date are the first and last date of the current month 
-*  this is assumed so that the function call to the bonus method is correct
-*  may be changed later 
-*/
-create proc Add_Payroll
+create or alter proc Add_Payroll
 @employee_id int,
 @from date, @to date	
 as						
 begin
 
-declare @bonus int = dbo.Bonus_amount(@employee_id)	
-declare @deduction_amount int = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
+declare @bonus decimal(10,2) = dbo.Bonus_amount(@employee_id)	
+declare @deduction_amount decimal(10,2) = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
 
-declare @base_salary decimal(10,2)= (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
-declare @years int = (select top 1 e.years_of_experience from Employee e where e.employee_ID = @employee_ID);
-declare @salary decimal(10,2) = @base_salary * (1 + @years * 0.01);
+declare @salary decimal(10,2)= (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
 
 -- payment_date, final_salary_amount, from_date, to_date, comments, bonus_amount, deduction_amount, emp_ID
 insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus_amount, deductions_amount, emp_ID) 
-			values(getdate(), @salary + @bonus - @deduction_amount, @from, @to, @bonus, @deduction_amount, @employee_id);
+			values(cast(getdate() as date), @salary + @bonus - @deduction_amount, @from, @to, @bonus, @deduction_amount, @employee_id);
 
 end
 
-
-/* 
-
-
-- if the Dean wants a compensation leave? does he also require approval from the president? or just check if he attended during his holiday?
-	same in accidental leave
-
-- Can both dean and vice dean have an accidental leave at the same time?
-		if so then how do we process their leaves
-
-- When processing annual/accidental leaves, do we assume that the previous reviews 
-		for the leaves has been processed?
-		meaning can the HR recieve the request before the president for example?
-
-- Will the request be approved by HR if the employee has sufficient balance?	
-	keda keda el final status hayeb2a rejected
-
-*/
+go

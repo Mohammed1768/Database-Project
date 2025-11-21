@@ -1,7 +1,15 @@
-USE University_HR_ManagementSystem_Team_12;
+-- بسم الله الرحمن الرحيم
+
+/*   /\_/\
+*   (= ._.)
+*   / >  \>
+*/
+
+use University_HR_ManagementSystem_Team_No_12;
 GO
 
--- 2.3 a)
+
+-- 2.3 a):
 CREATE PROC Update_Status_Doc
 AS
     UPDATE Document
@@ -9,16 +17,37 @@ AS
     WHERE expiry_date < CAST(GETDATE() AS DATE);
 GO
 
--- 2.3 b)
+-- 2.3 b):
 CREATE PROC Remove_Deductions
 AS
     DELETE FROM Deduction
     WHERE EXISTS (SELECT 1 FROM Employee WHERE Employee.employee_ID = Deduction.emp_id AND Employee.employment_status = 'resigned')
 GO
 
---2.3 c)
+--2.3 c):
+CREATE PROC Update_Employment_Status 
+    @Employee_ID int
+AS
+BEGIN
+    DECLARE @Is_On_Leave BIT = dbo.Is_On_Leave(@Employee_ID, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE));
 
--- 2.3 d)
+    IF (@Is_On_Leave=1)
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'onleave'
+        WHERE employee_ID = @Employee_ID;
+    END
+
+    ELSE
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'active'
+        WHERE employee_ID = @Employee_ID;
+    END
+END;
+GO
+
+-- 2.3 d):
 CREATE PROC Create_Holiday
 AS
     CREATE TABLE Holiday(
@@ -30,7 +59,7 @@ AS
     );
 GO
 
--- 2.3 e)
+-- 2.3 e):
 CREATE PROC  Add_Holiday
     @holiday_name VARCHAR(50),
     @from_date DATE,
@@ -40,7 +69,7 @@ AS
     VALUES(@holiday_name, @from_date, @to_date)
 GO
 
--- 2.3 f)
+-- 2.3 f):
 CREATE PROC Initiate_Attendance 
 AS 
     INSERT INTO Attendance(emp_ID, date) 
@@ -54,7 +83,7 @@ AS
         ); 
 GO
 
---2.3 g)
+--2.3 g):
 CREATE PROCEDURE Update_Attendance
     @employee_id INT,
     @check_in_time TIME,
@@ -67,7 +96,7 @@ AS
     WHERE emp_ID = @employee_id AND date = CAST(GETDATE() AS DATE);
 GO
 
--- 2.3 h)
+-- 2.3 h):
 CREATE PROC Remove_Holiday
 AS
     DELETE FROM Attendance
@@ -78,7 +107,7 @@ AS
     );
 GO
 
--- 2.3 i)
+-- 2.3 i):
 CREATE PROCEDURE Remove_DayOff
     @Employee_ID INT
 AS
@@ -98,7 +127,7 @@ BEGIN
 END;
 GO
 
--- 2.3 j) 
+-- 2.3 j): 
 CREATE PROCEDURE remove_approved_leaves
     @employee_id INT
 AS
@@ -125,13 +154,50 @@ BEGIN
 END;
 GO
 
---2.3 k) 
-CREATE PROCEDURE Replace_employee
-    @Emp1_ID INT,
-    @Emp2_ID INT,
+--2.3 k): 
+--Note: Employee 2 replaces employee 1 
+CREATE OR ALTER PROCEDURE Replace_employee
+    @Emp1_ID INT,    
+    @Emp2_ID INT,     
     @from_date DATE,
     @to_date DATE
 AS
+BEGIN
+    DECLARE @dept1 VARCHAR(50);
+    DECLARE @dept2 VARCHAR(50);
+    DECLARE @contract2 VARCHAR(50);
+    DECLARE @status2 VARCHAR(50);
+
+--Employee cannot replace himself
+    IF @Emp1_ID = @Emp2_ID
+        RETURN;
+
+    SELECT @dept1 = dept_name
+    FROM Employee
+    WHERE employee_ID = @Emp1_ID;
+
+    SELECT @dept2 = dept_name,
+           @contract2 = type_of_contract,
+           @status2 = employment_status
+    FROM Employee
+    WHERE employee_ID = @Emp2_ID;
+
+    --Replacement Cannot be on leave or Part Time and active
+    IF @status2 <> 'active'
+        RETURN;
+
+    IF @contract2 = 'part_time'
+        RETURN;
+
+    IF dbo.Is_On_Leave(@Emp2_ID, @from_date, @to_date) = 1
+        RETURN;
+
+    --Same department check
+    IF @dept1 <> @dept2
+        RETURN;
+
     INSERT INTO Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date)
     VALUES (@Emp1_ID, @Emp2_ID, @from_date, @to_date);
+END;
 GO
+
