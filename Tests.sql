@@ -691,3 +691,20 @@ values (5,19,'pending') --HR_MET
 insert into Employee_Approve_Leave (Emp1_ID,leave_ID,status)
 values (5,20,'pending') --HR_MET
 ------------------------------------------------------
+
+exec Submit_annual 5, 4, '09-04-2025', '12-04-2025' ;
+
+('Mohamed','Ahmed','mohamed.ahmedy@guc.edu.eg','9087',
+'Nasr City',
+'M','Saturday',7,'1234567890123452','active','part_time',
+'Marwan Samir','01234567897',
+NULL,6,'09-01-2025',NULL,'BI')
+
+
+select employee_ID, employment_status, dept_name, role_name from Employee, Employee_Role WHERE Employee_Role.emp_ID = Employee.employee_ID
+select * from Leave, Annual_Leave where Annual_Leave.request_ID = Leave.request_ID 
+
+select employee_ID, employment_status, dept_name, Role.role_name, Role.rank from Employee, Employee_Role, Role 
+WHERE Employee_Role.emp_ID = Employee.employee_ID and Employee_Role.role_name = Role.role_name
+
+select * from Employee_Approve_Leave;
