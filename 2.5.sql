@@ -185,6 +185,9 @@ end
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
 		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR_Rep%' )
 
+if @hr_rep is null
+set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -203,7 +206,7 @@ if @rank>=5
 		)
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@dean, @request_id)
 	end
-else 
+if @rank<5 
 	begin
 		-- select employees with rank = 1 or 2 (president, vice president)
 		-- we have assumed that if the president is on leave, the request will be handled by the vice president
@@ -362,6 +365,9 @@ declare @hr_employee int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
 	where role_name = @role_name
 )
+if @hr_employee is null
+set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
 
 insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
 end
@@ -465,6 +471,9 @@ declare @hr_employee int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
 	where role_name = @role_name
 )
+if @hr_employee is null
+set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
 
 insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
 
@@ -565,8 +574,12 @@ declare @upper_board int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 	inner join Role r on (r.role_name = er.role_name)
 	where r.role_name like 'Upper%' and e.employment_status = 'active'
-	order by r.rank asc
+	order by r.rank desc
 ) 
+if @upper_board is null
+set @upper_board = (select top 1 er.emp_ID from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'Vice President')
+
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
 
@@ -581,6 +594,9 @@ declare @hr_employee int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
 	where role_name = @role_name
 )
+if @hr_employee is null
+set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
 
 insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
 
@@ -703,9 +719,14 @@ Begin
 
 	-- ID of the employee who will approve/reject this request
 	declare @hr_employee int = (
-				select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-				where role_name = @role_name
-				)
+		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
+		where role_name = @role_name
+	)
+
+	if @hr_employee is null
+	set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
+
 	insert into Employee_Approve_Leave values(@hr_employee, @leaveID, 'pending')
 End;
 Go
