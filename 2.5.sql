@@ -571,6 +571,10 @@ declare @upper_board int = (
 	where r.role_name like 'Upper%' and e.employment_status = 'active'
 	order by r.rank desc
 ) 
+if @upper_board is null
+set @upper_board = (select top 1 er.emp_ID from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'Vice President')
+
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
 
