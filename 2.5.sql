@@ -679,7 +679,7 @@ Begin
 	begin 
 		update Leave
 		set final_approval_status='rejected' where request_ID=@leaveID
-		return
+		return;
 	end
 
 	-- Will skip the Comensation Leave submission if they are not in the same month.
@@ -687,7 +687,7 @@ Begin
 		begin 
 			update Leave
 			set final_approval_status='rejected' where request_ID=@leaveID
-			return
+			return;
 		end
 	
 
