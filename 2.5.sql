@@ -206,7 +206,7 @@ if @rank>=5
 		)
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@dean, @request_id)
 	end
-else 
+if @rank<5 
 	begin
 		-- select employees with rank = 1 or 2 (president, vice president)
 		-- we have assumed that if the president is on leave, the request will be handled by the vice president

@@ -9,15 +9,15 @@ GROUP BY er.role_name;
 
 
 EXEC Submit_annual
-    7, 11,
+    3, 5,
     '2025-11-26',
     '2025-11-26';
 
 
 SELECT * FROM Annual_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID
-WHERE l.request_ID > 50;
+WHERE l.request_ID > 63;
 
 SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-WHERE Leave_ID > 50;
+WHERE Leave_ID > 63;
