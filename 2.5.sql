@@ -112,9 +112,7 @@ begin
 
 -- if invalid request
 if (@start_date>@end_date) 
-begin 
-	return
-end
+return
 
 -- update the leave tables
 --			(date_of_request, start_date, end_date, final_approval_status)
@@ -122,6 +120,13 @@ insert into Leave(date_of_request, start_date, end_date) values (getdate(), @sta
 declare @request_id int = scope_identity()
 --		(request_id, employee_id, replacement_id)
 insert into Annual_Leave values(@request_id, @employee_id, @replacement_emp)
+
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 -- if employee is part time
 if exists (
@@ -135,21 +140,21 @@ end
 
 
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_id)
+	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
 
 
 -- if dean is submitting a request while vice dean is on leave, automatically reject the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean','Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_id
+		where e.dept_name=@dept_name and r.role_name in ('Dean','Vice Dean') and e.employee_ID<>@employee_id
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) begin 
 		update Leave
@@ -162,7 +167,7 @@ end
 -- if employee is in the HR departement
 if exists(
 	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
-	where er.role_name like 'HR%'
+	where er.role_name like 'HR%' and e.employee_ID=@employee_id
 )
 begin
 	-- we only require approval from the manager
@@ -286,11 +291,8 @@ create or alter proc Submit_accidental
 as
 begin
 
-
-if @start_date > @end_date
-begin 
-	return;
-end
+if (@start_date>@end_date) 
+return
 
 --		Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
 insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
@@ -298,6 +300,14 @@ declare @request_id int = scope_identity()
 
 --		(request_id, employee_id)
 insert into Accidental_Leave values(@request_id, @employee_id)
+
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
 
 -- if invalid request
 -- if duration is greater than 1 day skip the request
@@ -309,21 +319,21 @@ begin
 end
 
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_id)
+	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean', 'Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_id
+		where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_id
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) 
 	begin 
@@ -367,6 +377,9 @@ create or alter proc Submit_medical
 AS
 begin
 
+if (@start_date>@end_date) 
+return
+
 
 if @start_date > @end_date
 begin 
@@ -383,24 +396,31 @@ insert into Medical_Leave values(@request_id, @insurance_status, @disability_det
 insert into Document(type, description, file_name, emp_ID, medical_ID) 
 	values('Medical', @document_description, @file_name, @employee_ID, @request_id)
 
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_ID)
+	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
 declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean', 'Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_ID
+		where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) begin 
 		update Leave
@@ -457,11 +477,9 @@ CREATE or alter proc Submit_unpaid
 AS
 begin
 
+if (@start_date>@end_date) 
+return
 
-if @start_date > @end_date
-begin 
-	return;
-end
 
 -- update the leave tables
 --			(date_of_request, start_date, end_date, final_approval_status)
@@ -472,10 +490,18 @@ insert into Unpaid_Leave values(@request_id, @employee_ID)
 insert into Document(type, description, file_name, emp_ID, unpaid_ID) 
 	values('Memo', @document_description, @file_name, @employee_ID, @request_id)
 
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
+
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_ID)
+	where employee_ID=@employee_ID order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
 declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
@@ -509,14 +535,14 @@ end
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean', 'Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_ID
+		where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) begin
 		update Leave
@@ -617,6 +643,37 @@ Begin
 	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_workday, reason, replacement_emp)
 	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
 
+	declare @role int = (select top 1 r.role_name from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
+		where employee_ID=@employee_ID order by r.rank asc)
+	declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
+
+
+	-- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
+	if @role in ('Dean', 'Vice Dean')
+	begin
+		if not exists (
+			-- select both dean and vice dean in the same departement
+			-- exclude the employee submitting the request and exclude the employees on leave
+			select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+			inner join Role r on (er.role_name=r.role_name)
+			where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
+			and dbo.Is_On_Leave(e.employee_ID, @compensation_date, @compensation_date) = 0
+		) begin
+			update Leave
+			set final_approval_status='rejected' where request_ID=@leaveID
+			return
+		end
+	end
+
+
+
+	if (CAST(@compensation_date AS DATE) < CAST(GETDATE() AS DATE))
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@leaveID
+		return
+	end
 
 	-- Will skip the Comensation Leave submission if they are not in the same month.
 	If (Month(@compensation_date) <> Month(@date_of_original_workday))
@@ -625,7 +682,7 @@ Begin
 			set final_approval_status='rejected' where request_ID=@leaveID
 			return
 		end
-
+	
 
 	--Departement of the employee
 	Declare @departement Varchar(50) = (Select top 1 dept_name From Employee e Where e.employee_ID=@employee_ID)
@@ -659,5 +716,5 @@ BEGIN
     INSERT INTO Performance(rating, comments, semester, emp_ID)
     VALUES(@rating, @comment, @semester, @employee_ID);
 END;
-GO
+
 

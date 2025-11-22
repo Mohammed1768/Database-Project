@@ -182,7 +182,7 @@ begin
 
 	create table Deduction (
 		deduction_ID int primary key identity(1,1), 
-		emp_ID int, 
+		emp_ID int primary key, 
 		date date,
 		amount decimal(10, 2),
 		type varchar(50), 
@@ -211,7 +211,7 @@ begin
 		Emp2_ID int, 
 		from_date date, 
 		to_date date,
-		primary key (Emp1_ID, Emp2_ID, from_date),
+		primary key (Emp1_ID, Emp2_ID),
 		foreign key (Emp1_ID) references Employee(employee_ID), 
 		foreign key (Emp2_ID) references Employee(employee_ID),
 		CHECK (to_date>=from_date)

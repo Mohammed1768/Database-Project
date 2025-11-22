@@ -708,3 +708,4 @@ select employee_ID, employment_status, dept_name, Role.role_name, Role.rank from
 WHERE Employee_Role.emp_ID = Employee.employee_ID and Employee_Role.role_name = Role.role_name
 
 select * from Employee_Approve_Leave;
+
