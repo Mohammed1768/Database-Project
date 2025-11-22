@@ -38,11 +38,12 @@ As
 Return
 (
 	Select A.date, A.status, A.check_in_time, A.check_out_time, A.total_duration
-	From Attendance A 
+	From Attendance A inner join Employee e on e.employee_ID = A.emp_ID
 	Where A.emp_ID = @employee_ID 
-		  AND MONTH(A.date) = MONTH(GETDATE())
-		  AND YEAR(A.date) = YEAR(GETDATE())
-);
+			AND MONTH(A.date) = MONTH(GETDATE())
+			AND YEAR(A.date) = YEAR(GETDATE())
+			AND NOT(DATENAME(WEEKDAY, A.date) = e.official_day_off and A.status = 'absent') -- not unattended day off
+);	
 Go
 
 -- 2.5 d):
@@ -64,7 +65,7 @@ create or alter function Deductions_Attendance
 returns Table
 AS
 return (
-	select d.*
+	select d.deduction_ID, d.date, d.amount, d.type, d.status, d.unpaid_ID, d.attendance_ID
 	from Deduction d
 	where d.emp_ID = @employee_ID AND month(d.date) = @month AND 
 	d.type IN ('missing_hours','missing_days')
@@ -178,7 +179,7 @@ begin
 end
 
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR_Rep%')
+		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR_Rep%' )
 
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
@@ -193,7 +194,7 @@ if @rank>=5
 		declare @dean int = (
 			select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 			inner join Role r on (er.role_name=r.role_name)
-			where r.rank in (3,4) and dbo.Is_On_Leave(employee_ID, getdate(), getdate())=0 and dept_name=@dept_name
+			where r.rank in (3,4) and e.employment_status = 'active' and dept_name=@dept_name
 			order by r.rank asc
 		)
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@dean, @request_id)
@@ -205,7 +206,7 @@ else
 		declare @president int = (
 			select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 			inner join Role r on (er.role_name=r.role_name)
-			where r.rank in (1,2) and dbo.Is_On_Leave(employee_ID, getdate(), getdate())=0
+			where r.rank in (1,2) and e.employment_status = 'active'
 			order by r.rank asc
 		)
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@president, @request_id)
@@ -426,7 +427,7 @@ end
 
 
 -- get the id of the doctor
-declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%')
+declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%' and e.employment_status = 'active')
 
 -- request should be approved by a doctor
 insert into Employee_Approve_Leave values(@doctor, @request_id, 'pending');
@@ -522,7 +523,11 @@ begin
 		inner join Role r on (er.role_name=r.role_name)
 		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_ID
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
-	) return
+	) begin
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 end
 
 
@@ -531,7 +536,7 @@ end
 declare @upper_board int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 	inner join Role r on (r.role_name = er.role_name)
-	where r.role_name like 'Upper%' and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
+	where r.role_name like 'Upper%' and e.employment_status = 'active'
 	order by r.rank asc
 ) 
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
@@ -559,10 +564,10 @@ begin
 	declare @higher_ranking int = (
 		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (r.role_name = er.role_name) 
-		where r.rank<@rank and e.dept_name=@dept_name
+		where r.rank<@rank and e.dept_name=@dept_name and e.employment_status = 'active'
 		order by r.rank asc
 	)
-	insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
+	insert into Employee_Approve_Leave values(@higher_ranking, @request_id, 'pending');
 
 end
 
