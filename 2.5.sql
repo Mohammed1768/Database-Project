@@ -198,7 +198,7 @@ if @rank>=5
 		declare @dean int = (
 			select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 			inner join Role r on (er.role_name=r.role_name)
-			where r.rank in (3,4) and e.employment_status = 'active' and dept_name=@dept_name
+			where r.rank in (3,4) and e.employment_status = 'active' and e.dept_name=@dept_name
 			order by r.rank asc
 		)
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@dean, @request_id)
