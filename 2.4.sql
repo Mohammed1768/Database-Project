@@ -247,15 +247,15 @@ declare @emp_id int = (select top 1 e.employee_ID from Employee e
 
 declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID); 
 declare @day_off varchar(50) = (select official_day_off from Employee where employee_ID=@emp_id)
-declare @date_of_original_work_day date = (select date_of_original_work_day from Compensation_Leave where request_ID=@request_ID)
-declare @replacement_emp int = (select top 1 replacement_emp_ID from Compensation_Leave where request_id=@request_ID)
+declare @date_of_original_work_day date = (select date_of_original_workday from Compensation_Leave where request_ID=@request_ID)
+declare @replacement_emp int = (select top 1 replacement_emp from Compensation_Leave where request_id=@request_ID)
 
 declare @status varchar(50) = 'approved'
 
 -- if employee took another compensation leave using the same day off
 if exists(
 	select * from Compensation_Leave 
-	where request_ID<>@request_ID and date_of_original_work_day=@date
+	where request_ID<>@request_ID and date_of_original_workday=@date
 ) set @status = 'rejected'
 
 

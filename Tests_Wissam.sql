@@ -1,29 +1,23 @@
--- بسم الله الرحمن الرحيم
-
-/*   /\_/\
-*   (= ._.)
-*   / >  \>
-*/
-
 use University_HR_ManagementSystem_Team_No_12;
-go
+go -- Keep this to switch the database context
 
 
-DECLARE @id INT;
+SELECT er.role_name, MIN(er.emp_ID) AS Sample_emp_ID
+FROM Employee e 
+INNER JOIN   Employee_Role er ON (e.employee_ID = er.emp_ID) 
+GROUP BY er.role_name;
+
 
 EXEC Submit_accidental 
-    2,
-    '2025-11-22',
-    '2025-11-22';
+    11,
+    '2025-11-26',
+    '2025-11-26';
 
-SET @id = SCOPE_IDENTITY();
 
-SELECT * 
-FROM Accidental_Leave a 
+SELECT * FROM Accidental_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID
-WHERE l.request_ID = @id;
+WHERE l.request_ID > 38;
 
-SELECT * 
-FROM Employee_Approve_Leave el
+SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-WHERE Leave_ID = @id;
+WHERE Leave_ID >38;
