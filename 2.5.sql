@@ -140,21 +140,21 @@ end
 
 
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_id)
+	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
 
 
 -- if dean is submitting a request while vice dean is on leave, automatically reject the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean','Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_id
+		where e.dept_name=@dept_name and r.role_name in ('Dean','Vice Dean') and e.employee_ID<>@employee_id
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) begin 
 		update Leave
@@ -167,7 +167,7 @@ end
 -- if employee is in the HR departement
 if exists(
 	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
-	where er.role_name like 'HR%'
+	where er.role_name like 'HR%' and e.employee_ID=@employee_id
 )
 begin
 	-- we only require approval from the manager
@@ -319,21 +319,21 @@ begin
 end
 
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_id)
+	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean', 'Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_id
+		where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_id
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) 
 	begin 
@@ -399,23 +399,23 @@ begin
 end
 
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_ID)
+	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
 declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean', 'Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_ID
+		where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) begin 
 		update Leave
@@ -494,9 +494,9 @@ end
 
 
 -- useful variables
-declare @rank int = (select min(rank) from Employee e inner join 
+declare @role int = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
-	where employee_ID=@employee_ID)
+	where employee_ID=@employee_ID order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
 declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
@@ -530,14 +530,14 @@ end
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
-if @rank in (3,4)
+if @role in ('Dean', 'Vice Dean')
 begin
 	if not exists (
 		-- select both dean and vice dean in the same departement
 		-- exclude the employee submitting the request and exclude the employees on leave
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
-		where e.dept_name=@dept_name and r.rank in (3,4) and e.employee_ID<>@employee_ID
+		where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) begin
 		update Leave
@@ -637,6 +637,31 @@ Begin
 
 	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_workday, reason, replacement_emp)
 	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
+
+	declare @role int = (select top 1 r.role_name from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
+		where employee_ID=@employee_ID order by r.rank asc)
+	declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
+
+
+	-- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
+	if @role in ('Dean', 'Vice Dean')
+	begin
+		if not exists (
+			-- select both dean and vice dean in the same departement
+			-- exclude the employee submitting the request and exclude the employees on leave
+			select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+			inner join Role r on (er.role_name=r.role_name)
+			where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
+			and dbo.Is_On_Leave(e.employee_ID, @compensation_date, @compensation_date) = 0
+		) begin
+			update Leave
+			set final_approval_status='rejected' where request_ID=@leaveID
+			return
+		end
+	end
+
+
 
 	if (CAST(@compensation_date AS DATE) < CAST(GETDATE() AS DATE))
 	begin 
