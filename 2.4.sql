@@ -258,6 +258,8 @@ if exists(
 	where request_ID<>@request_ID and date_of_original_workday=@date
 ) set @status = 'rejected'
 
+if (dbo.Is_On_Leave(@replacement_emp, @date, @date) = 1)
+	set @status = 'rejected'
 
 -- if date_of_original_workday is not the employee's day off
 if (datename(WEEKDAY, @date_of_original_work_day) <> @day_off)
