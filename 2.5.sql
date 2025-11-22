@@ -111,7 +111,7 @@ as
 begin
 
 -- if invalid request
-if (@start_date>@end_date or @start_date<getdate()) 
+if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
 return
 
 -- update the leave tables
@@ -286,7 +286,7 @@ create or alter proc Submit_accidental
 as
 begin
 
-if (@start_date>@end_date or @start_date<getdate()) 
+if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
 return
 
 --		Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
@@ -364,7 +364,7 @@ create or alter proc Submit_medical
 AS
 begin
 
-if (@start_date>@end_date or @start_date<getdate()) 
+if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
 return
 
 
@@ -453,7 +453,7 @@ CREATE or alter proc Submit_unpaid
 AS
 begin
 
-if (@start_date>@end_date or @start_date<getdate()) 
+if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
 return
 
 
@@ -604,6 +604,9 @@ Create or alter Proc Submit_compensation
 As
 Begin
 	
+	if (CAST(@compensation_date AS DATE) < CAST(GETDATE() AS DATE)) 
+	return
+
 	--Inserting leave request into its tables
 	Insert Into Leave (date_of_request, start_date, end_date) 
 	Values (Cast(GetDate() As Date), @compensation_date, @compensation_date);
