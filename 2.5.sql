@@ -183,11 +183,11 @@ begin
 end
 
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where dept_name=@dept_name and r.role_name like 'HR_Rep%' )
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name) and e.employment_status='active')
 
 if @hr_rep is null
-set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
+set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -363,11 +363,11 @@ else
 -- get the id of the employee with the the above role
 declare @hr_employee int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-	where role_name = @role_name
+	where role_name = @role_name and e.employment_status='active'
 )
 if @hr_employee is null
 set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
 end
@@ -464,11 +464,11 @@ else
 -- get the id of the employee with the the above role
 declare @hr_employee int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-	where role_name = @role_name
+	where role_name = @role_name and e.employment_status='active'
 )
 if @hr_employee is null
 set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
 
@@ -587,11 +587,11 @@ else
 -- get the id of the employee with the the above role
 declare @hr_employee int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-	where role_name = @role_name
+	where role_name = @role_name and e.employment_status='active'
 )
 if @hr_employee is null
 set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
 
@@ -715,12 +715,12 @@ Begin
 	-- ID of the employee who will approve/reject this request
 	declare @hr_employee int = (
 		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-		where role_name = @role_name
+		where role_name = @role_name and e.employment_status='active'
 	)
 
 	if @hr_employee is null
 	set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
-			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager')
+			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
 	insert into Employee_Approve_Leave values(@hr_employee, @leaveID, 'pending')
 End;
