@@ -111,7 +111,7 @@ as
 begin
 
 -- if invalid request
-if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
+if (@start_date>@end_date) 
 return
 
 -- update the leave tables
@@ -121,6 +121,12 @@ declare @request_id int = scope_identity()
 --		(request_id, employee_id, replacement_id)
 insert into Annual_Leave values(@request_id, @employee_id, @replacement_emp)
 
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 -- if employee is part time
 if exists (
@@ -131,7 +137,6 @@ if exists (
 	set final_approval_status='rejected' where request_ID=@request_id
 	return
 end
-
 
 
 -- useful variables
@@ -286,7 +291,7 @@ create or alter proc Submit_accidental
 as
 begin
 
-if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
+if (@start_date>@end_date) 
 return
 
 --		Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
@@ -295,6 +300,14 @@ declare @request_id int = scope_identity()
 
 --		(request_id, employee_id)
 insert into Accidental_Leave values(@request_id, @employee_id)
+
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
+
 
 -- if invalid request
 -- if duration is greater than 1 day skip the request
@@ -364,7 +377,7 @@ create or alter proc Submit_medical
 AS
 begin
 
-if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
+if (@start_date>@end_date) 
 return
 
 
@@ -378,6 +391,12 @@ insert into Medical_Leave values(@request_id, @insurance_status, @disability_det
 insert into Document(type, description, file_name, emp_ID, medical_ID) 
 	values('Medical', @document_description, @file_name, @employee_ID, @request_id)
 
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 -- useful variables
 declare @rank int = (select min(rank) from Employee e inner join 
@@ -453,7 +472,7 @@ CREATE or alter proc Submit_unpaid
 AS
 begin
 
-if (@start_date>@end_date or CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE)) 
+if (@start_date>@end_date) 
 return
 
 
@@ -465,6 +484,13 @@ insert into Unpaid_Leave values(@request_id, @employee_ID)
 
 insert into Document(type, description, file_name, emp_ID, unpaid_ID) 
 	values('Memo', @document_description, @file_name, @employee_ID, @request_id)
+
+if (CAST(@start_date AS DATE) < CAST(GETDATE() AS DATE))
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 
 -- useful variables
@@ -604,9 +630,6 @@ Create or alter Proc Submit_compensation
 As
 Begin
 	
-	if (CAST(@compensation_date AS DATE) < CAST(GETDATE() AS DATE)) 
-	return
-
 	--Inserting leave request into its tables
 	Insert Into Leave (date_of_request, start_date, end_date) 
 	Values (Cast(GetDate() As Date), @compensation_date, @compensation_date);
@@ -615,6 +638,12 @@ Begin
 	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_workday, reason, replacement_emp)
 	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
 
+	if (CAST(@compensation_date AS DATE) < CAST(GETDATE() AS DATE))
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@leaveID
+		return
+	end
 
 	-- Will skip the Comensation Leave submission if they are not in the same month.
 	If (Month(@compensation_date) <> Month(@date_of_original_workday))
@@ -623,7 +652,7 @@ Begin
 			set final_approval_status='rejected' where request_ID=@leaveID
 			return
 		end
-
+	
 
 	--Departement of the employee
 	Declare @departement Varchar(50) = (Select top 1 dept_name From Employee e Where e.employee_ID=@employee_ID)
@@ -657,5 +686,5 @@ BEGIN
     INSERT INTO Performance(rating, comments, semester, emp_ID)
     VALUES(@rating, @comment, @semester, @employee_ID);
 END;
-GO
+
 
