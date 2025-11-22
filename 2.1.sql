@@ -182,7 +182,7 @@ begin
 
 	create table Deduction (
 		deduction_ID int primary key identity(1,1), 
-		emp_ID int, 
+		emp_ID int primary key, 
 		date date,
 		amount decimal(10, 2),
 		type varchar(50), 
