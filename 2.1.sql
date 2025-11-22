@@ -181,14 +181,15 @@ begin
 	);
 
 	create table Deduction (
-		deduction_ID int primary key identity(1,1), 
-		emp_ID int primary key, 
+		deduction_ID int identity(1,1), 
+		emp_ID int, 
 		date date,
 		amount decimal(10, 2),
 		type varchar(50), 
 		status varchar(50) DEFAULT 'pending',
 		unpaid_ID int, 
 		attendance_ID int, 
+		Primary key (deduction_ID, emp_ID),
 		constraint Ded_empFK foreign key (emp_ID) references Employee(employee_ID), 
 		constraint Ded_unpaidFK foreign key (unpaid_ID) references Unpaid_Leave(request_ID),
 		constraint Ded_attendanceFK foreign key (attendance_ID) references Attendance(attendance_ID),
