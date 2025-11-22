@@ -110,6 +110,9 @@ create or alter proc Submit_annual
 as
 begin
 
+-- if invalid request
+if (@start_date>@end_date or @start_date<getdate()) 
+return
 
 -- update the leave tables
 --			(date_of_request, start_date, end_date, final_approval_status)
@@ -118,14 +121,6 @@ declare @request_id int = scope_identity()
 --		(request_id, employee_id, replacement_id)
 insert into Annual_Leave values(@request_id, @employee_id, @replacement_emp)
 
-
--- if invalid request
-if (@start_date>@end_date) 
-begin 
-	update Leave
-	set final_approval_status='rejected' where request_ID=@request_id
-	return
-end
 
 -- if employee is part time
 if exists (
@@ -291,6 +286,9 @@ create or alter proc Submit_accidental
 as
 begin
 
+if (@start_date>@end_date or @start_date<getdate()) 
+return
+
 --		Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
 insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
 declare @request_id int = scope_identity()
@@ -300,7 +298,7 @@ insert into Accidental_Leave values(@request_id, @employee_id)
 
 -- if invalid request
 -- if duration is greater than 1 day skip the request
-if (@start_date>@end_date or DATEDIFF(day,@start_date,@end_date)+1 > 1) 
+if (DATEDIFF(day,@start_date,@end_date)+1 > 1) 
 begin 
 	update Leave
 	set final_approval_status='rejected' where request_ID=@request_id
@@ -366,6 +364,9 @@ create or alter proc Submit_medical
 AS
 begin
 
+if (@start_date>@end_date or @start_date<getdate()) 
+return
+
 
 -- update the leave tables
 --			(date_of_request, start_date, end_date, final_approval_status)
@@ -377,13 +378,6 @@ insert into Medical_Leave values(@request_id, @insurance_status, @disability_det
 insert into Document(type, description, file_name, emp_ID, medical_ID) 
 	values('Medical', @document_description, @file_name, @employee_ID, @request_id)
 
-
-if (@start_date>@end_date)
-begin 
-	update Leave
-	set final_approval_status='rejected' where request_ID=@request_id
-	return
-end
 
 -- useful variables
 declare @rank int = (select min(rank) from Employee e inner join 
@@ -459,6 +453,10 @@ CREATE or alter proc Submit_unpaid
 AS
 begin
 
+if (@start_date>@end_date or @start_date<getdate()) 
+return
+
+
 -- update the leave tables
 --			(date_of_request, start_date, end_date, final_approval_status)
 insert into Leave(date_of_request, start_date, end_date) values (getdate(), @start_date, @end_date);	-- default status is pending
@@ -467,14 +465,6 @@ insert into Unpaid_Leave values(@request_id, @employee_ID)
 
 insert into Document(type, description, file_name, emp_ID, unpaid_ID) 
 	values('Memo', @document_description, @file_name, @employee_ID, @request_id)
-
-
-if (@start_date>@end_date)
-begin 
-	update Leave
-	set final_approval_status='rejected' where request_ID=@request_id
-	return
-end
 
 
 -- useful variables
