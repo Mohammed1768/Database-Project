@@ -569,7 +569,7 @@ declare @upper_board int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 	inner join Role r on (r.role_name = er.role_name)
 	where r.role_name like 'Upper%' and e.employment_status = 'active'
-	order by r.rank asc
+	order by r.rank desc
 ) 
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 

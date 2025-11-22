@@ -8,16 +8,16 @@ INNER JOIN   Employee_Role er ON (e.employee_ID = er.emp_ID)
 GROUP BY er.role_name;
 
 
-EXEC Submit_unpaid
-    7,
+EXEC Submit_annual
+    7, 11,
     '2025-11-26',
-    '2025-11-26', null, null;
+    '2025-11-26';
 
 
 SELECT * FROM Annual_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID
-WHERE l.request_ID > 43;
+WHERE l.request_ID > 50;
 
 SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-WHERE Leave_ID >43;
+WHERE Leave_ID > 50;
