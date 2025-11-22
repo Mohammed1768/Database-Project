@@ -619,7 +619,7 @@ Begin
 	Values (Cast(GetDate() As Date), @compensation_date, @compensation_date);
 	Declare @leaveID Int = Scope_Identity();
 
-	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_work_day, reason, replacement_emp_ID)
+	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_workday, reason, replacement_emp)
 	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
 
 

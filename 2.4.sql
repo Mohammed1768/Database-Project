@@ -35,6 +35,12 @@ if not exists(
 ) return
 
 
+-- if the request does not exist in the annual table
+if not exists(
+	select * from Annual_Leave where request_ID=@request_ID
+) return
+
+
 -- if the request has been previously rejected
 if exists(
 	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
@@ -58,10 +64,17 @@ declare @balance int = (
 );
 declare @start_date date = (select l.start_date from Leave l where l.request_ID=@request_ID);
 declare @end_date date = (select l.end_date from Leave l where l.request_ID=@request_ID);
-declare @replacement_emp int = (select top 1 replacement_emp_ID from Compensation_Leave where request_id=@request_ID)
+declare @replacement_emp int = (select top 1 replacement_emp from Compensation_Leave where request_id=@request_ID)
 
 -- request or employee does not exist in the table
-if (@balance is null) return;
+if (@balance is null) 
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
 
 
 declare @final_status varchar(50) = 'approved'
@@ -102,6 +115,12 @@ if not exists(
 	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
 ) return
 
+-- if the request does not exist in the accidental table
+if not exists(
+	select * from Accidental_Leave where request_ID=@request_ID
+) return
+
+
 
 declare @employee_id int = (
 	select top 1 a.emp_ID from Accidental_Leave a
@@ -113,7 +132,14 @@ declare @balance int = (
 );
 
 -- request or employee does not exist in the table
-if (@balance is null) return
+if (@balance is null) 
+if (@balance is null) 
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
 
 
 -- if insufficient leave balance
