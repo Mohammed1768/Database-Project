@@ -140,10 +140,14 @@ end
 
 
 -- useful variables
-declare @role int = (select top 1 r.role_name from Employee e inner join 
+declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
+
+declare @rank int = (select min(rank) from Employee e inner join 
+	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
+	where employee_ID=@employee_id)
 
 
 -- if dean is submitting a request while vice dean is on leave, automatically reject the request and vice versa
@@ -319,7 +323,7 @@ begin
 end
 
 -- useful variables
-declare @role int = (select top 1 r.role_name from Employee e inner join 
+declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
@@ -399,7 +403,7 @@ begin
 end
 
 -- useful variables
-declare @role int = (select top 1 r.role_name from Employee e inner join 
+declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
@@ -494,13 +498,16 @@ end
 
 
 -- useful variables
-declare @role int = (select top 1 r.role_name from Employee e inner join 
+declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_ID order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
 declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
 declare @duration int = datediff(day, @start_date, @end_date) + 1
+declare @rank varchar(50) = (select top 1 r.rank from Employee e inner join 
+	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
+	where employee_ID=@employee_ID order by r.rank asc)
 
 -- part time employees are not eligible 
 if (@type_of_contract='part_time')
@@ -638,7 +645,7 @@ Begin
 	Insert Into Compensation_Leave (request_ID, emp_ID, date_of_original_workday, reason, replacement_emp)
 	Values (@leaveID, @employee_ID, @date_of_original_workday, @reason, @replacement_emp)
 
-	declare @role int = (select top 1 r.role_name from Employee e inner join 
+	declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 		where employee_ID=@employee_ID order by r.rank asc)
 	declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
