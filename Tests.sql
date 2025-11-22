@@ -25,7 +25,7 @@ insert into Employee (first_name,last_name,email,
 password,address,gender,official_day_off,years_of_experience,
 national_ID,employment_status, type_of_contract,emergency_contact_name,
 emergency_contact_phone,annual_balance,accidental_balance,hire_date,
-last_working_day,dept_name)
+last_working_date,dept_name)
 values  ('Jack','John','jack.john@guc.edu.eg','123','new cairo',
 'M','Saturday',0,'1234567890123456','active','full_time',
 'Sarah','01234567892',

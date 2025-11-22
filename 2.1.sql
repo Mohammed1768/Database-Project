@@ -10,12 +10,8 @@ create database University_HR_ManagementSystem_Team_No_12;
 go
 use University_HR_ManagementSystem_Team_No_12;
 go
-
-
-
-
 -- 2.1 b):
-create proc createAllTables as	
+create or alter proc createAllTables as	
 begin
 
 	create table Department(
@@ -131,11 +127,11 @@ begin
 	create table Compensation_Leave(
 		request_ID int primary key,
 		reason varchar(50),
-		date_of_original_work_day date,
+		date_of_original_workday date,
 		emp_ID int,
-		replacement_emp_ID int,
+		replacement_emp int,
 		constraint Com_empFK foreign key (emp_ID) references Employee (employee_ID),
-		constraint Com_repEmpFK foreign key (replacement_emp_ID) references Employee (employee_ID),
+		constraint Com_repEmpFK foreign key (replacement_emp) references Employee (employee_ID),
 		constraint Com_leaveFK foreign key (request_ID) references Leave (request_ID)
 	);
 
