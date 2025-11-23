@@ -232,7 +232,7 @@ go
 
 -- 2.1 c):
 -- delete the tables in a revere topological order
-create procedure dropAllTables as 
+create or alter procedure dropAllTables as 
 begin
 	drop table Employee_Approve_Leave;
 	drop table Employee_Replace_Employee;
@@ -258,7 +258,7 @@ go
 
 
 -- 2.1 d):										
-create proc dropAllProceduresFunctionsViews as		
+create or alter proc dropAllProceduresFunctionsViews as		
 begin
 	-- all functions
 	drop function getsalary, HRLoginValidation, Bonus_amount, EmployeeLoginValidation, MyPerformance,
@@ -287,7 +287,7 @@ go
 
 
 -- 2.1 e):
-create procedure clearAllTables as 
+create or alter procedure clearAllTables as 
 begin
 	truncate table Employee_Approve_Leave;
 	truncate table Employee_Replace_Employee;
@@ -315,7 +315,7 @@ go
 
 
 -- helper function:
-create function getsalary(@employee_id int)
+create or alter function getsalary(@employee_id int)
 returns decimal(10,2)
 as 
 begin
@@ -346,3 +346,5 @@ return @base_salary + (@YOE_perc/100) * @YOE * @base_salary;
 
 end
 go
+
+
