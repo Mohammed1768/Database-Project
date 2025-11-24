@@ -182,9 +182,17 @@ begin
 	return
 end
 
+-- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name) and e.employment_status='active')
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
 
+
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'active')
+	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
+		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
+
+-- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
@@ -354,22 +362,37 @@ end
 
 declare @departement varchar(50) = (select dept_name from Employee where employee_ID=@employee_id);	-- departement the employee works in
 
-declare @role_name varchar(50);												-- role of the employee who will approve the request
-if @departement like 'HR%'		-- employee is in the HR departement
-	set @role_name = 'HR Manager';
-else 
-	set @role_name = concat('HR_Representative_', @departement) 
 
--- get the id of the employee with the the above role
-declare @hr_employee int = (
-	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-	where role_name = @role_name and e.employment_status='active'
+-- if employee is in the HR departement
+if exists(
+	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+	where er.role_name like 'HR%' and e.employee_ID=@employee_id
 )
-if @hr_employee is null
-set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+begin
+	-- we only require approval from the manager
+	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status='active')
+
+	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
+	return
+end
+
+-- hr representative
+declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+
+
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'active')
+	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
+		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
+
+-- if no replacement is avaliable sent it to the HR Manager
+if @hr_rep is null
+set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
-insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
+insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 end
 
 go
@@ -448,29 +471,45 @@ begin
 	return
 end
 
-
 -- get the id of the doctor
 declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%' and e.employment_status = 'active')
 
 -- request should be approved by a doctor
 insert into Employee_Approve_Leave values(@doctor, @request_id, 'pending');
 
-declare @role_name varchar(50);												-- role of the hr employee who will approve the request
-if @dept_name like 'HR%'		-- employee is in the HR departement
-	set @role_name = 'HR_Manager';
-else 
-	set @role_name = concat('HR_Representative_', @dept_name) 
 
--- get the id of the employee with the the above role
-declare @hr_employee int = (
-	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-	where role_name = @role_name and e.employment_status='active'
+
+-- if employee is in the HR departement
+if exists(
+	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+	where er.role_name like 'HR%' and e.employee_ID=@employee_id
 )
-if @hr_employee is null
-set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+begin
+	-- we only require approval from the manager
+	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+
+	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
+	return
+end
+
+
+-- hr representative
+declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+
+
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'active')
+	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
+		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
+
+-- if no replacement is avaliable sent it to the HR Manager
+if @hr_rep is null
+set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
-insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
+insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
 end
 go
@@ -578,22 +617,39 @@ set @upper_board = (select top 1 er.emp_ID from Employee e inner join
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
 
-declare @role_name varchar(50);									-- role of the hr employee who will approve the request
-if @dept_name like 'HR%'		-- employee is in the HR departement
-	set @role_name = 'HR Manager';
-else 
-	set @role_name = concat('HR_Representative_', @dept_name) 
 
--- get the id of the employee with the the above role
-declare @hr_employee int = (
-	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-	where role_name = @role_name and e.employment_status='active'
+-- if employee is in the HR departement
+if exists(
+	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+	where er.role_name like 'HR%' and e.employee_ID=@employee_id
 )
-if @hr_employee is null
-set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+begin
+	-- we only require approval from the manager
+	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+
+	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
+	return
+end
+
+-- hr representative
+declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+
+
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'active')
+	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
+		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
+
+-- if no replacement is avaliable sent it to the HR Manager
+if @hr_rep is null
+set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
-insert into Employee_Approve_Leave values(@hr_employee, @request_id, 'pending');
+insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
+
+
 
 
 -- if the employee submitting the request is a TA or a doctor
@@ -705,24 +761,36 @@ Begin
 	--Departement of the employee
 	Declare @departement Varchar(50) = (Select top 1 dept_name From Employee e Where e.employee_ID=@employee_ID)
 
-	-- Role of the employee who will approve/reject this request
-	Declare @role_name Varchar(50);											
-	if (@departement like 'HR%')		-- employee is in the HR departement
-		set @role_name = 'HR_Manager';
-	else 
-		set @role_name = concat('HR_Representative_', @departement); 
-
-	-- ID of the employee who will approve/reject this request
-	declare @hr_employee int = (
-		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID = er.emp_ID)
-		where role_name = @role_name and e.employment_status='active'
+	-- if employee is in the HR departement
+	if exists(
+		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+		where er.role_name like 'HR%' and e.employee_ID=@employee_id
 	)
+	begin
+		-- we only require approval from the manager
+		declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+				on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
 
-	if @hr_employee is null
-	set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @leaveID)
+		return
+	end
+
+	-- hr representative
+	declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
+			on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+
+
+	-- if @hr_rep is not active -> set @hr_representative to their replacement
+	if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'active')
+		set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
+			Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
+
+	-- if no replacement is avaliable sent it to the HR Manager
+	if @hr_rep is null
+	set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
-	insert into Employee_Approve_Leave values(@hr_employee, @leaveID, 'pending')
+	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @leaveID)
 End;
 Go
 
