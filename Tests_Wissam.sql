@@ -7,17 +7,17 @@ FROM Employee e
 INNER JOIN   Employee_Role er ON (e.employee_ID = er.emp_ID) 
 GROUP BY er.role_name;
 
+select * from Employee e where e.employee_ID=4
 
 EXEC Submit_annual
-    3, 5,
+    11, 5,
     '2025-11-26',
     '2025-11-26';
 
-
 SELECT * FROM Annual_Leave a 
-JOIN Leave l ON a.request_ID = l.request_ID
-WHERE l.request_ID > 63;
+JOIN Leave l ON a.request_ID = l.request_ID 
+where l.request_ID >1
 
 SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-WHERE Leave_ID > 63;
+WHERE Leave_ID > 1;
