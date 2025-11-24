@@ -208,11 +208,12 @@ begin
 	);
 
 	create table Employee_Replace_Employee (
+		Table_ID int,
 		Emp1_ID int, 
 		Emp2_ID int, 
 		from_date date, 
 		to_date date,
-		primary key (Emp1_ID, Emp2_ID),
+		primary key (Table_ID),
 		foreign key (Emp1_ID) references Employee(employee_ID), 
 		foreign key (Emp2_ID) references Employee(employee_ID),
 		CHECK (to_date>=from_date)
@@ -346,5 +347,4 @@ return @base_salary + (@YOE_perc/100) * @YOE * @base_salary;
 
 end
 go
-
 

@@ -5,7 +5,7 @@
 *   / >  \>
 */
 
-use University_HR_ManagementSystem_Team_No_12;
+use University_HR_ManagementSystem_Team_No_12
 go
 
 
@@ -97,7 +97,8 @@ begin
 	set annual_balance = annual_balance - @num_days
 	where employee_ID=@employee_id
 
-	insert into Employee_Replace_Employee values(@employee_id, @replacement_emp, @start_date, @end_date)
+	insert into Employee_Replace_Employee(Emp1_ID,Emp2_ID,from_date,to_date) 
+		values(@employee_id, @replacement_emp, @start_date, @end_date)
 end
 
 end
@@ -274,7 +275,7 @@ set status = @status
 where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
 if @status='approved'
-insert into Employee_Replace_Employee values(@emp_id, @replacement_emp, @date, @date)
+insert into Employee_Replace_Employee(Emp1_ID,Emp2_ID,from_date,to_date) values(@emp_id, @replacement_emp, @date, @date)
 
 
 end

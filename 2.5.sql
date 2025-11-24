@@ -186,7 +186,7 @@ declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Emplo
 		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name) and e.employment_status='active')
 
 if @hr_rep is null
-set @hr_employee = (select top 1 er.emp_ID from Employee e inner join 
+set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
