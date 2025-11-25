@@ -229,19 +229,25 @@ end
 go
 
 
--- 2.5) h
-create or alter function Status_leaves() 
-returns Table
-as 
-return (
-	select l.request_ID, l.date_of_request, l.final_approval_status 
-	from Leave l left outer join Annual_Leave a on (l.request_ID = a.request_ID)
-	left outer join Accidental_Leave ac on (l.request_ID = ac.request_ID)
-
-	where month(l.date_of_request) = month(getdate()) and 
-	(a.request_ID is not null or ac.request_ID is not null)
+-- 2.5(h)
+CREATE OR ALTER FUNCTION Status_leaves(@employee_ID INT)
+RETURNS TABLE
+AS 
+RETURN (
+    SELECT 
+        l.request_ID, 
+        l.date_of_request, 
+        l.final_approval_status
+    FROM Leave l 
+    LEFT JOIN Annual_Leave a 
+        ON l.request_ID = a.request_ID AND a.emp_ID = @employee_ID
+    LEFT JOIN Accidental_Leave ac 
+        ON l.request_ID = ac.request_ID AND ac.emp_ID = @employee_ID
+    WHERE 
+        MONTH(l.date_of_request) = MONTH(GETDATE())
+        AND (a.request_ID IS NOT NULL OR ac.request_ID IS NOT NULL)
 );
-go
+GO
 
 -- 2.5) i
 create or alter proc Upperboard_approve_annual
