@@ -285,7 +285,7 @@ begin
 end
 
 declare @start_date date = (select start_date from Leave where request_ID=@request_ID);
-declare @end_date date = (select start_date from Leave where request_ID=@request_ID);
+declare @end_date date = (select end_date from Leave where request_ID=@request_ID);
 
 if (@start_date <= cast(getdate() as date))
 begin
@@ -298,7 +298,7 @@ end
 
 declare @status varchar(50) = 'approved';
 if exists (select l.start_date,l.end_date from Leave l inner join Unpaid_Leave a on (l.request_ID=a.request_ID)
-	where l.final_approval_status='accepted' and l.start_date<=cast(@end_date as date) and l.end_date>=cast(@start_date as date))
+	where l.final_approval_status='approved' and l.start_date<=cast(@end_date as date) and l.end_date>=cast(@start_date as date))
 set @status = 'rejected';
 
 update Leave 

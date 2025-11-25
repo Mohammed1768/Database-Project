@@ -797,6 +797,19 @@ begin
 	set final_approval_status='rejected' where request_ID=@request_ID
 end
 
+
+ IF @status='approved'
+    BEGIN
+        IF NOT EXISTS (
+            SELECT * 
+            FROM Employee_Approve_Leave
+            WHERE Leave_ID=@request_ID AND status='pending'
+        )
+            UPDATE Leave
+            SET final_approval_status='approved'
+            WHERE request_ID=@request_ID;
+    END
+
 End;
 Go
 
@@ -834,7 +847,7 @@ Begin
 			inner join Role r on (er.role_name=r.role_name)
 			where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
 			and dbo.Is_On_Leave(e.employee_ID, @compensation_date, @compensation_date) = 0
-		) begin
+		) begin	
 			update Leave
 			set final_approval_status='rejected' where request_ID=@leaveID
 			return
@@ -888,7 +901,7 @@ Begin
 
 
 	-- if @hr_rep is not active -> set @hr_representative to their replacement
-	if ((select employment_status from Employee e where employee_ID=@hr_rep) in ('active', 'notice_period'))
+	if ((select employment_status from Employee e where employee_ID=@hr_rep) not in ('active', 'notice_period'))
 		set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
 			Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
 
