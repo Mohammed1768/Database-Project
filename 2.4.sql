@@ -28,7 +28,6 @@ create or alter proc HR_approval_on_annual
 as
 begin
 
-
 -- if the request does not exist in the annual table
 if not exists(
 	select * from Annual_Leave where request_ID=@request_ID
@@ -245,6 +244,10 @@ create or alter proc HR_approval_an_acc
 as 
 begin
 
+if exists(
+	select * from Leave where request_ID=@request_ID and final_approval_status='rejected'
+) return
+
 exec HR_approval_on_annual @request_id, @HR_ID;
 exec HR_approval_on_accidental @request_id, @HR_ID;
 
@@ -256,6 +259,10 @@ create or alter proc HR_approval_unpaid
 @request_ID int, @HR_ID int
 as 
 begin
+
+if exists(
+	select * from Leave where request_ID=@request_ID and final_approval_status='rejected'
+) return
 
 -- employee is not supposed to approve the request
 -- either invalid request or invalid employee
@@ -305,6 +312,9 @@ create or alter proc HR_approval_comp
 as 
 begin
 
+if exists(
+	select * from Leave where request_ID=@request_ID and final_approval_status='rejected'
+) return
 
 -- employee is not supposed to approve the request
 -- either invalid request or invalid employee

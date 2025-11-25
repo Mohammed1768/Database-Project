@@ -256,7 +256,7 @@ end
 go
 
 
--- 2.5(h)
+-- 2.5) h
 CREATE OR ALTER FUNCTION Status_leaves(@employee_ID INT)
 RETURNS TABLE
 AS 
@@ -310,10 +310,10 @@ declare @employee_id int = (
 );
 
 
-declare @dept_1 int = (
+declare @dept_1 varchar(50) = (
 	select dept_name from Employee e where e.employee_ID=@replacement_ID
 );
-declare @dept_2 int = (
+declare @dept_2 varchar(50) = (
 	select dept_name from Employee e where e.employee_ID=@employee_id
 );
 
@@ -325,6 +325,16 @@ if @dept_1 <> @dept_2
 update Employee_Approve_Leave 
 set status = @status 
 where Leave_ID=@request_ID and Emp1_ID=@Upperboard_ID;
+
+
+if @status = 'rejected'
+begin
+	update Employee_Approve_Leave 
+	set status='rejected' where Leave_ID=@request_ID
+
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_ID
+end
 
 end
 go
@@ -663,7 +673,7 @@ end
 declare @upper_board int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 	inner join Role r on (r.role_name = er.role_name)
-	where r.role_name like 'Upper%' and e.employment_status in ('active', 'notice_period')
+	where r.role_name in ('President', 'Vice President') and e.employment_status in ('active', 'notice_period')
 	order by r.rank desc
 ) 
 if @upper_board is null
@@ -772,6 +782,15 @@ if not exists(
 update Employee_Approve_Leave 
 set status = @status
 where @request_ID=Leave_ID and @Upperboard_ID=Emp1_ID
+
+if @status = 'rejected'
+begin
+	update Employee_Approve_Leave 
+	set status='rejected' where Leave_ID=@request_ID
+
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_ID
+end
 
 End;
 Go
