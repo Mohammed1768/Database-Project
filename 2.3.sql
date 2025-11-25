@@ -29,10 +29,6 @@ CREATE OR ALTER PROC Update_Employment_Status
     @Employee_ID int
 AS
 BEGIN -- no need to update status if the employee is resigned
-    IF EXISTS (SELECT 1 FROM Employee e WHERE e.employee_ID = @Employee_ID AND e.employment_status = 'resigned')
-    BEGIN
-    return;
-    END
     DECLARE @Is_On_Leave BIT = dbo.Is_On_Leave(@Employee_ID, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE));
 
     IF (@Is_On_Leave=1)
