@@ -208,7 +208,7 @@ begin
 	);
 
 	create table Employee_Replace_Employee (
-		Table_ID int primary key IDENTITY(1,1)
+		Table_ID int primary key IDENTITY(1,1),
 		Emp1_ID int, 
 		Emp2_ID int, 
 		from_date date, 
@@ -253,6 +253,7 @@ begin
 	drop table Employee_Phone;
 	drop table Employee;
 	drop table Department;
+
 end;
 go
 
@@ -261,7 +262,7 @@ go
 create or alter proc dropAllProceduresFunctionsViews as		
 begin
 	-- all functions
-	drop function getsalary, HRLoginValidation, Bonus_amount, EmployeeLoginValidation, MyPerformance,
+	drop function HRLoginValidation, Bonus_amount, EmployeeLoginValidation, MyPerformance,
 	MyAttendance, Last_month_payroll, Deductions_Attendance, Is_On_Leave, Status_leaves
 
 	-- 2.1
@@ -289,25 +290,25 @@ go
 -- 2.1 e):
 create or alter procedure clearAllTables as 
 begin
-	truncate table Employee_Approve_Leave;
-	truncate table Employee_Replace_Employee;
-	truncate table Performance;
-	truncate table Deduction;
-	truncate table Attendance;	
-	truncate table Payroll;
-	truncate table Document;
-	truncate table Compensation_Leave;
-	truncate table Unpaid_Leave;
-	truncate table Medical_Leave;
-	truncate table Accidental_Leave;
-	truncate table Annual_Leave;
-	truncate table Leave;
-	truncate table Role_existsIn_Department;
-	truncate table Employee_Role;
-	truncate table Role;
-	truncate table Employee_Phone;
-	truncate table Employee;
-	truncate table Department;
+	delete from Employee_Approve_Leave;
+	delete from Employee_Replace_Employee;
+	delete from Performance;
+	delete from Deduction;
+	delete from Attendance;	
+	delete from Payroll;
+	delete from Document;
+	delete from Compensation_Leave;
+	delete from Unpaid_Leave;
+	delete from Medical_Leave;
+	delete from Accidental_Leave;
+	delete from Annual_Leave;
+	delete from Leave;
+	delete from Role_existsIn_Department;
+	delete from Employee_Role;
+	delete from Role;
+	delete from Employee_Phone;
+	delete from Employee;
+	delete from Department;
 end;
 go
 
