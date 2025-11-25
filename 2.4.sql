@@ -364,11 +364,10 @@ begin
 
 	declare @attendance int = (
 		select top 1 attendance_ID from Attendance a
-		where datepart(hour, a.total_duration) < 8 and 
+		where datepart(hour, a.total_duration) < 8 and a.emp_ID=@employee_ID and
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 		order by a.date asc
 	);
-
 	
 	if (@hours >= (22 * 8))  return;				-- if employee has attended over the 22 * 8 hours
 
