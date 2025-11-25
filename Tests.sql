@@ -5,10 +5,10 @@
 *   / >  \>
 */
 
-use University_HR_ManagementSystem_Team_No_12;
+use University_HR_ManagementSystem_Team_122;
 go
 
-exec createAllTables
+-- exec createAllTables
 ------
 insert into Department (name,building_location)
 values ('MET','C building')

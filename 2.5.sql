@@ -631,14 +631,14 @@ declare @rank INT = (select top 1 r.rank from Employee e inner join
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_ID order by r.rank asc)
 
--- part time employees are not eligible 
+-- part time employees are not eligible for unpaid leave
 if (@type_of_contract='part_time')
 begin 
 	update Leave
 	set final_approval_status='rejected' where request_ID=@request_id
 	return
 end
--- cannot request more than 30 dats
+-- cannot request more than 30 days
 if (@duration > 30)
 begin 
 	update Leave
@@ -766,7 +766,6 @@ end
 
 end
 GO
-
 
 -- 2.5) m
 Create or alter Proc Upperboard_approve_unpaids
