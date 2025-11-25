@@ -59,17 +59,6 @@ Return
 );
 Go
 
-
-
-
-
-
--- this is the 67th line in our IDE, we have reserved it for TUFFness
--- BOI
--- BOI
-
-
-
 -- 2.5) e
 create or alter function Deductions_Attendance
 (@employee_ID int, @month int)
@@ -277,7 +266,7 @@ RETURN (
 	FROM Leave l 
 	INNER JOIN Annual_Leave a
 	ON l.request_ID = a.request_ID AND a.emp_ID = @employee_ID
-	WHERE MONTH(l1.date_of_request) = MONTH(GETDATE())
+	WHERE MONTH(l.date_of_request) = MONTH(GETDATE())
 	)
 	UNION
 	(

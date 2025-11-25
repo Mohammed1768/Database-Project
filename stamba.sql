@@ -9,26 +9,26 @@ INNER JOIN   Employee_Role er ON (e.employee_ID = er.emp_ID)
 GROUP BY er.role_name;
 
 -- show the details of a specific employee
-select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=11
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=4
 select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=5
 select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name='Vice Dean'
 
 -- submit a request for the selcted employee
-EXEC Submit_unpaid
-    5,
-    '2025-11-26',
-    '2025-11-26', null, null;
+EXEC Submit_annual
+    4,5, 
+    '2025-12-1',
+    '2025-12-6';
 
 -- select * from Leave l inner join Compensation_Leave a on (l.request_ID=a.request_ID) 
 
 -- check the leave tables and Employee_Approve_Leave table
-SELECT * FROM Medical_Leave a 
+SELECT * FROM Annual_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID 
-where l.request_ID > 36
+where l.request_ID > 41
 
 SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-WHERE Leave_ID > 36
+WHERE Leave_ID > 42
 
 
 -- check that the status of the leave after the review from the HR and the Upper board 
