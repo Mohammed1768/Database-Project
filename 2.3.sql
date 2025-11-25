@@ -37,13 +37,6 @@ BEGIN
         SET employment_status = 'onleave'
         WHERE employee_ID = @Employee_ID;
     END
-
-    ELSE
-    BEGIN
-        UPDATE Employee
-        SET employment_status = 'active'
-        WHERE employee_ID = @Employee_ID;
-    END
 END;
 GO
 

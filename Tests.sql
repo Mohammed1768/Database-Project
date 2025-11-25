@@ -496,7 +496,7 @@ select * from Performance
 ------------------------------------------------
 insert into Deduction (emp_ID,date,amount,type,
 status,unpaid_ID,attendance_ID)
-values (1,'10-01-2025',1333.33,'missing_days','finalized',null,7)
+values (1,'10-01-2025',1333.33,'missing_days','finalized',null,6)
 
 insert into Deduction (emp_ID,date,amount,type,
 status,unpaid_ID,attendance_ID)
