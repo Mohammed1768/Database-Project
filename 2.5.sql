@@ -112,7 +112,7 @@ as
 begin
 
 -- if invalid request
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 -- update the leave tables
@@ -266,7 +266,7 @@ RETURN (
 	FROM Leave l 
 	INNER JOIN Annual_Leave a
 	ON l.request_ID = a.request_ID AND a.emp_ID = @employee_ID
-	WHERE MONTH(l1.date_of_request) = MONTH(GETDATE())
+	WHERE MONTH(l.date_of_request) = MONTH(GETDATE())
 	)
 	UNION
 	(
@@ -309,7 +309,7 @@ declare @employee_id int = (
         select emp_ID from Medical_Leave where request_ID = @request_id
 								UNION 
         select emp_ID from Unpaid_Leave where request_ID = @request_id
-    ) as six_sevennnnnn														-- ts is soo tuff
+    ) as six_sevennnnnn													-- ts is soo tuff
 );
 
 
@@ -350,7 +350,7 @@ create or alter proc Submit_accidental
 as
 begin
 
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 --		Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
@@ -467,7 +467,7 @@ create or alter proc Submit_medical
 AS
 begin
 
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 
@@ -599,7 +599,7 @@ CREATE or alter proc Submit_unpaid
 AS
 begin
 
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 
