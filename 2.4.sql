@@ -75,8 +75,15 @@ declare @end_date date = (select l.end_date from Leave l where l.request_ID=@req
 declare @replacement_emp int = (select top 1 replacement_emp from Annual_Leave where request_id=@request_ID)
 
 
-declare @final_status varchar(50) = 'approved'
+if (@start_date <= cast(getdate() as date))
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
 
+declare @final_status varchar(50) = 'approved'
 -- if insufficient leave balance
 if (@balance is null or @balance<@num_days) set @final_status = 'rejected'; 
 
@@ -149,6 +156,25 @@ if (@current_status = 'approved')
 -- check if submitted within 48 hours (from date_of_request to start_date)
 declare @date_of_request datetime = (select date_of_request from Leave where request_ID=@request_ID);
 declare @start_date datetime = (select start_date from Leave where request_ID=@request_ID);
+declare @employee_id int = (
+	select top 1 a.emp_ID from Accidental_Leave a
+	where a.request_ID = @request_ID
+);
+declare @balance int = (
+	select top 1 accidental_balance from Employee e
+	where e.employee_ID = @employee_id
+);
+declare @end_date date = (select end_date from Leave where request_ID=@request_ID);
+
+
+if (@start_date <= cast(getdate() as date))
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
 
 if (DATEDIFF(hour, @date_of_request, @start_date) > 48)
 begin
@@ -163,15 +189,16 @@ begin
     return
 end
 
-declare @employee_id int = (
-	select top 1 a.emp_ID from Accidental_Leave a
-	where a.request_ID = @request_ID
-);
-declare @balance int = (
-	select top 1 accidental_balance from Employee e
-	where e.employee_ID = @employee_id
-);
-declare @end_date date = (select end_date from Leave where request_ID=@request_ID);
+
+if (@start_date <= cast(getdate() as date))
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
+
 
 -- request or employee does not exist in the table
 if (@balance is null) 
@@ -223,6 +250,7 @@ exec HR_approval_on_accidental @request_id, @HR_ID;
 
 end
 go
+
 -- 2.4 c)
 create or alter proc HR_approval_unpaid 
 @request_ID int, @HR_ID int
@@ -246,6 +274,16 @@ begin
 	where request_ID = @request_ID
 	return
 end
+
+declare @start_date datetime = (select start_date from Leave where request_ID=@request_ID);
+if (@start_date <= cast(getdate() as date))
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
+
 
 declare @status varchar(50) = 'approved';
 
@@ -296,6 +334,14 @@ declare @date_of_original_work_day date = (select date_of_original_workday from 
 declare @replacement_emp int = (select replacement_emp from Compensation_Leave where request_id=@request_ID)
 
 declare @status varchar(50) = 'approved'
+
+if (@date <= cast(getdate() as date))
+begin
+	update Leave 
+	set final_approval_status = 'rejected'			
+	where request_ID = @request_ID
+	return
+end
 
 -- if employee took another compensation leave using the same day off
 if exists(
