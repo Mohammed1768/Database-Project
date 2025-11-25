@@ -242,7 +242,7 @@ begin
 	);
 
 	create table Employee_Replace_Employee (
-		Table_ID int primary key IDENTITY(1,1)
+		Table_ID int primary key IDENTITY(1,1),
 		Emp1_ID int, 
 		Emp2_ID int, 
 		from_date date, 

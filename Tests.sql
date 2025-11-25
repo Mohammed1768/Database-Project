@@ -692,6 +692,7 @@ insert into Employee_Approve_Leave (Emp1_ID,leave_ID,status)
 values (5,20,'pending') --HR_MET
 ------------------------------------------------------
 
+exec Submit_annual 5, 4, '09-04-2025', '12-04-2025' ;
 
 ('Mohamed','Ahmed','mohamed.ahmedy@guc.edu.eg','9087',
 'Nasr City',
@@ -699,26 +700,11 @@ values (5,20,'pending') --HR_MET
 'Marwan Samir','01234567897',
 NULL,6,'09-01-2025',NULL,'BI')
 
-exec Submit_compensation 11, '09-01-2025', 'hamoksha', '09-02-2025', 2
-exec Submit_Annual 11, 1, '11-26-2025', '11-28-2025';
 
-select employee_ID,employment_status, dept_name, role_name from Employee, Employee_Role WHERE Employee_Role.emp_ID = Employee.employee_ID
+select employee_ID, employment_status, dept_name, role_name from Employee, Employee_Role WHERE Employee_Role.emp_ID = Employee.employee_ID
 select * from Leave, Annual_Leave where Annual_Leave.request_ID = Leave.request_ID 
 
-select * from Leave, Compensation_Leave where Compensation_Leave.request_ID = Leave.request_ID 
-
-select employee_ID, employment_status, type_of_contract, dept_name, Role.role_name, Role.rank from Employee, Employee_Role, Role 
+select employee_ID, employment_status, dept_name, Role.role_name, Role.rank from Employee, Employee_Role, Role 
 WHERE Employee_Role.emp_ID = Employee.employee_ID and Employee_Role.role_name = Role.role_name
 
-SELECT er.role_name, MIN(er.emp_ID) AS Sample_emp_ID
-FROM Employee e 
-INNER JOIN   Employee_Role er ON (e.employee_ID = er.emp_ID) 
-GROUP BY er.role_name;
-
 select * from Employee_Approve_Leave;
-
-select * from document
-
-SELECT * FROM Employee_Approve_Leave el
-JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-
