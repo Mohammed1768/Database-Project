@@ -261,19 +261,22 @@ CREATE OR ALTER FUNCTION Status_leaves(@employee_ID INT)
 RETURNS TABLE
 AS 
 RETURN (
-    SELECT 
-        l.request_ID, 
-        l.date_of_request, 
-        l.final_approval_status
-    FROM Leave l 
-    LEFT JOIN Annual_Leave a 
-        ON l.request_ID = a.request_ID AND a.emp_ID = @employee_ID
-    LEFT JOIN Accidental_Leave ac 
-        ON l.request_ID = ac.request_ID AND ac.emp_ID = @employee_ID
-    WHERE 
-        MONTH(l.date_of_request) = MONTH(GETDATE())
-        AND (a.request_ID IS NOT NULL OR ac.request_ID IS NOT NULL)
-);
+	(
+	SELECT l.request_ID, l.date_of_request, l.final_approval_status
+	FROM Leave l 
+	INNER JOIN Annual_Leave a
+	ON l.request_ID = a.request_ID AND a.emp_ID = @employee_ID
+	WHERE MONTH(l1.date_of_request) = MONTH(GETDATE())
+	)
+	UNION
+	(
+	SELECT l1.request_ID, l1.date_of_request, l1.final_approval_status
+	FROM Leave l1 
+	INNER JOIN Accidental_leave ac
+	ON l1.request_ID = ac.request_ID AND ac.emp_ID = @employee_ID
+	WHERE MONTH(l1.date_of_request) = MONTH(GETDATE())
+	)
+	);
 GO
 
 -- 2.5) i
@@ -401,7 +404,7 @@ end
 
 
 
-declare @departement varchar(50) = (select dept_name from Employee where employee_ID=@employee_id);	-- departement the employee works in
+declare @departement varchar(50) = (select top 1 dept_name from Employee where employee_ID=@employee_id);	-- departement the employee works in
 
 
 -- if employee is in the HR departement
@@ -489,8 +492,8 @@ end
 declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id order by r.rank asc)
-declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
-declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
+declare @dept_name varchar(50) = (select top 1 e.dept_name from Employee e where e.employee_ID=@employee_ID);
+declare @gender char(1) = (select top 1 gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
 
 
@@ -547,7 +550,7 @@ if exists(
 begin
 	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
-			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status IN ('active', 'notice_period'))
 	if @manager is null
 	begin 
 		update Leave
@@ -659,10 +662,13 @@ if exists(
 	where er.role_name like 'HR%' and e.employee_ID=@employee_ID
 )
 begin
-	-- we only require approval from the manager
+	-- we require approval from the manager and the president
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
 			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active','notice_period'))
-	if @manager is null
+	declare @president int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'President' and e.employment_status in ('active','notice_period'))
+	
+	if @manager is null or @president is null
 	begin 
 		update Leave
 		set final_approval_status='rejected' where request_ID=@request_id
@@ -670,6 +676,7 @@ begin
 	end
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
+	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@president, @request_id)
 	return
 end
 
