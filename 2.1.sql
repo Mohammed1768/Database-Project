@@ -208,12 +208,11 @@ begin
 	);
 
 	create table Employee_Replace_Employee (
-		Table_ID int,
+		Table_ID int primary key IDENTITY(1,1)
 		Emp1_ID int, 
 		Emp2_ID int, 
 		from_date date, 
 		to_date date,
-		primary key (Table_ID),
 		foreign key (Emp1_ID) references Employee(employee_ID), 
 		foreign key (Emp2_ID) references Employee(employee_ID),
 		CHECK (to_date>=from_date)

@@ -10,7 +10,7 @@ GO
 
 
 -- 2.3 a):
-CREATE PROC Update_Status_Doc
+CREATE OR ALTER PROC Update_Status_Doc
 AS
     UPDATE Document
     SET status = 'expired'
@@ -18,14 +18,14 @@ AS
 GO
 
 -- 2.3 b):
-CREATE PROC Remove_Deductions
+CREATE OR ALTER PROC Remove_Deductions
 AS
     DELETE FROM Deduction
     WHERE EXISTS (SELECT 1 FROM Employee WHERE Employee.employee_ID = Deduction.emp_id AND Employee.employment_status = 'resigned')
 GO
 
 --2.3 c):
-CREATE PROC Update_Employment_Status 
+CREATE OR ALTER PROC Update_Employment_Status 
     @Employee_ID int
 AS
 BEGIN
@@ -48,7 +48,7 @@ END;
 GO
 
 -- 2.3 d):
-CREATE PROC Create_Holiday
+CREATE OR ALTER PROC Create_Holiday
 AS
     CREATE TABLE Holiday(
 	    holiday_id INT PRIMARY KEY IDENTITY(1,1),
@@ -60,7 +60,7 @@ AS
 GO
 
 -- 2.3 e):
-CREATE PROC  Add_Holiday
+CREATE OR ALTER PROC  Add_Holiday
     @holiday_name VARCHAR(50),
     @from_date DATE,
     @to_date DATE
@@ -70,21 +70,21 @@ AS
 GO
 
 -- 2.3 f):
-CREATE PROC Initiate_Attendance 
+CREATE OR ALTER PROCEDURE Initiate_Attendance 
 AS 
     INSERT INTO Attendance(emp_ID, date) 
     SELECT E.employee_ID, CAST(GETDATE() AS DATE) 
     FROM Employee E 
-    WHERE E.employment_status = 'active' 
-        AND NOT EXISTS ( 
-            SELECT 1 
-            FROM Attendance A 
-            WHERE A.emp_ID = E.employee_ID AND A.date = CAST(GETDATE() AS DATE) 
-        ); 
+    WHERE NOT EXISTS ( 
+        SELECT 1 
+        FROM Attendance A 
+        WHERE A.emp_ID = E.employee_ID 
+          AND A.date = CAST(GETDATE() AS DATE) 
+    ); 
 GO
 
 --2.3 g):
-CREATE PROCEDURE Update_Attendance
+CREATE OR ALTER PROCEDURE Update_Attendance
     @employee_id INT,
     @check_in_time TIME,
     @check_out_time TIME
@@ -97,7 +97,7 @@ AS
 GO
 
 -- 2.3 h):
-CREATE PROC Remove_Holiday
+CREATE OR ALTER PROC Remove_Holiday
 AS
     DELETE FROM Attendance
     WHERE EXISTS (
@@ -108,7 +108,7 @@ AS
 GO
 
 -- 2.3 i):
-CREATE PROCEDURE Remove_DayOff
+CREATE OR ALTER PROCEDURE Remove_DayOff
     @Employee_ID INT
 AS
 BEGIN
@@ -128,7 +128,7 @@ END;
 GO
 
 -- 2.3 j): 
-CREATE PROCEDURE remove_approved_leaves
+CREATE OR ALTER PROCEDURE remove_approved_leaves
     @employee_id INT
 AS
 BEGIN
@@ -168,7 +168,11 @@ BEGIN
     DECLARE @contract2 VARCHAR(50);
     DECLARE @status2 VARCHAR(50);
 
---Employee cannot replace himself
+    -- Validate date range
+    IF @from_date > @to_date
+        RETURN;
+
+    -- Employee cannot replace himself
     IF @Emp1_ID = @Emp2_ID
         RETURN;
 
@@ -176,13 +180,21 @@ BEGIN
     FROM Employee
     WHERE employee_ID = @Emp1_ID;
 
+    -- Check if Emp1 exists
+    IF @dept1 IS NULL
+        RETURN;
+
     SELECT @dept2 = dept_name,
            @contract2 = type_of_contract,
            @status2 = employment_status
     FROM Employee
     WHERE employee_ID = @Emp2_ID;
 
-    --Replacement Cannot be on leave or Part Time and active
+    -- Check if Emp2 exists
+    IF @dept2 IS NULL
+        RETURN;
+
+    -- Replacement Cannot be on leave or Part Time and active
     IF @status2 <> 'active'
         RETURN;
 
@@ -192,12 +204,41 @@ BEGIN
     IF dbo.Is_On_Leave(@Emp2_ID, @from_date, @to_date) = 1
         RETURN;
 
-    --Same department check
+    -- Same department check
     IF @dept1 <> @dept2
+        RETURN;
+
+    -- Check if Emp1 is actually on leave during this period
+    IF dbo.Is_On_Leave(@Emp1_ID, @from_date, @to_date) = 0
+        RETURN;
+
+    -- Check if Emp1 already has a replacement during this period
+    IF EXISTS (
+        SELECT 1 
+        FROM Employee_Replace_Employee
+        WHERE Emp1_ID = @Emp1_ID 
+          AND (
+              (@from_date BETWEEN from_date AND to_date) OR
+              (@to_date BETWEEN from_date AND to_date) OR
+              (from_date BETWEEN @from_date AND @to_date)
+          )
+    )
+        RETURN;
+
+    -- Check if Emp2 is already replacing someone else during this period
+    IF EXISTS (
+        SELECT 1 
+        FROM Employee_Replace_Employee
+        WHERE Emp2_ID = @Emp2_ID 
+          AND (
+              (@from_date BETWEEN from_date AND to_date) OR
+              (@to_date BETWEEN from_date AND to_date) OR
+              (from_date BETWEEN @from_date AND @to_date)
+          )
+    )
         RETURN;
 
     INSERT INTO Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date)
     VALUES (@Emp1_ID, @Emp2_ID, @from_date, @to_date);
 END;
 GO
-
