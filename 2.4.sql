@@ -49,14 +49,14 @@ return
 
 -- check if leave is already approved (prevents double deduction)
 declare @current_status varchar(50) = (
-    select final_approval_status from Leave where request_ID = @request_ID
+    select top 1 final_approval_status from Leave where request_ID = @request_ID
 );
 if (@current_status = 'approved')
     return -- already processed, don't deduct balance again
 
 
 -- useful variables
-declare @num_days int = (select l.num_days from Leave l where l.request_ID = @request_ID);
+declare @num_days int = (select top 1 l.num_days from Leave l where l.request_ID = @request_ID);
 declare @employee_id int = (
 	select top 1 a.emp_ID from Annual_Leave a
 	where a.request_ID = @request_ID
@@ -65,8 +65,8 @@ declare @balance int = (
 	select top 1 annual_balance from Employee e
 	where e.employee_ID = @employee_id
 );
-declare @start_date date = (select l.start_date from Leave l where l.request_ID=@request_ID);
-declare @end_date date = (select l.end_date from Leave l where l.request_ID=@request_ID);
+declare @start_date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID);
+declare @end_date date = (select top 1 l.end_date from Leave l where l.request_ID=@request_ID);
 declare @replacement_emp int = (select top 1 replacement_emp from Annual_Leave where request_id=@request_ID)
 
 declare @final_status varchar(50) = 'approved'
@@ -134,14 +134,14 @@ return
 
 -- check if leave is already approved (prevents double deduction)
 declare @current_status varchar(50) = (
-    select final_approval_status from Leave where request_ID = @request_ID
+    select top 1 final_approval_status from Leave where request_ID = @request_ID
 );
 if (@current_status = 'approved')
     return; -- already processed, don't deduct balance again
 
 -- check if submitted within 48 hours (from date_of_request to start_date)
-declare @date_of_request datetime = (select date_of_request from Leave where request_ID=@request_ID);
-declare @start_date datetime = (select start_date from Leave where request_ID=@request_ID);
+declare @date_of_request date = (select top 1 date_of_request from Leave where request_ID=@request_ID);
+declare @start_date date = (select top 1 start_date from Leave where request_ID=@request_ID);
 declare @employee_id int = (
 	select top 1 a.emp_ID from Accidental_Leave a
 	where a.request_ID = @request_ID
@@ -215,15 +215,28 @@ create or alter proc HR_approval_unpaid
 as 
 begin
 
+-- if the request does not exist in the unpaid table
+if not exists(
+	select * from Unpaid_Leave where request_ID=@request_ID
+) return
+
 if exists(
 	select * from Leave where request_ID=@request_ID and final_approval_status='rejected'
 ) return
+
+-- check if leave is already approved (prevents double deduction)
+declare @current_status varchar(50) = (
+    select top 1 final_approval_status from Leave where request_ID = @request_ID
+);
+if (@current_status = 'approved')
+    return; -- already processed, don't deduct balance again
 
 -- employee is not supposed to approve the request
 -- either invalid request or invalid employee
 if not exists(
 	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
 ) return
+
 
 declare @status varchar(50) = 'approved';
 
@@ -232,15 +245,15 @@ declare @status varchar(50) = 'approved';
 if exists(
 	select * from Employee_Approve_Leave e where e.Leave_ID=@request_ID and e.status='rejected'
 )
+set @status = 'rejected';
 
-
-declare @start_date date = (select start_date from Leave where request_ID=@request_ID);
-declare @end_date date = (select end_date from Leave where request_ID=@request_ID);
+declare @start_date date = (select top 1 start_date from Leave where request_ID=@request_ID);
+declare @end_date date = (select top 1 end_date from Leave where request_ID=@request_ID);
 
 if (@start_date <= cast(getdate() as date))
 set @status = 'rejected'
 
-
+-- check if employee already has overlapping approved leaves using Is_On_Leave function
 if exists (select l.start_date,l.end_date from Leave l inner join Unpaid_Leave a on (l.request_ID=a.request_ID) where 
 	l.request_ID=@request_ID and l.final_approval_status='approved' and l.start_date<=cast(@end_date as date) and l.end_date>=cast(@start_date as date))
 set @status = 'rejected';
@@ -263,6 +276,11 @@ create or alter proc HR_approval_comp
 as 
 begin
 
+-- if the request does not exist in the compensation table
+if not exists(
+	select * from Compensation_Leave where request_ID=@request_ID
+) return
+
 if exists(
 	select * from Leave where request_ID=@request_ID and final_approval_status='rejected'
 ) return
@@ -273,6 +291,12 @@ if not exists(
 	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
 ) return
 
+-- check if leave is already approved (prevents double deduction)
+declare @current_status varchar(50) = (
+    select top 1 final_approval_status from Leave where request_ID = @request_ID
+);
+if (@current_status = 'approved')
+    return; -- already processed, don't deduct balance again
 
 declare @status varchar(50) = 'approved';
 
@@ -287,9 +311,9 @@ declare @emp_id int = (select top 1 e.employee_ID from Employee e
 						 inner join Compensation_Leave c on (c.emp_ID = e.employee_ID)
 							where c.request_ID = @request_ID);
 declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID); 
-declare @day_off varchar(50) = (select official_day_off from Employee where employee_ID=@emp_id)
-declare @date_of_original_work_day date = (select date_of_original_workday from Compensation_Leave where request_ID=@request_ID)
-declare @replacement_emp int = (select replacement_emp from Compensation_Leave where request_id=@request_ID)
+declare @day_off varchar(50) = (select top 1 official_day_off from Employee where employee_ID=@emp_id)
+declare @date_of_original_work_day date = (select top 1 date_of_original_workday from Compensation_Leave where request_ID=@request_ID)
+declare @replacement_emp int = (select top 1 replacement_emp from Compensation_Leave where request_id=@request_ID)
 
 
 if (@date <= cast(getdate() as date))
@@ -297,16 +321,17 @@ set @status = 'rejected'
 
 -- if employee took another compensation leave using the same day off
 if exists(
-	select * from Compensation_Leave 
-	where request_ID<>@request_ID 
-	and date_of_original_workday=@date_of_original_work_day
+	select * from Compensation_Leave c inner join Leave l on (l.request_ID = c.request_ID)
+	where l.request_ID<>@request_ID 
+	and c.date_of_original_workday=@date_of_original_work_day
+	and l.final_approval_status = 'approved'
 ) set @status = 'rejected'
 
 if (MONTH(@date) <> MONTH(@date_of_original_work_day) OR YEAR(@date) <> YEAR(@date_of_original_work_day))
 	set @status = 'rejected'
 
 declare @hours_worked int = (
-	select DATEDIFF(hour, check_in_time, check_out_time)
+	select top 1 DATEDIFF(hour, check_in_time, check_out_time)
 	from Attendance
 	where emp_ID = @emp_id 
 	  and date = @date_of_original_work_day

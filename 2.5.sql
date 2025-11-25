@@ -61,15 +61,15 @@ Go
 
 -- 2.5) e
 create or alter function Deductions_Attendance
-(@employee_ID int, @month int)
+(@employee_ID int, @month int) -- we assume that the month is in the current year
 returns Table
 AS
 return (
 	select d.deduction_ID, d.date, d.amount, d.type, d.status, d.unpaid_ID, d.attendance_ID
 	from Deduction d
-	where d.emp_ID = @employee_ID AND month(d.date) = @month AND 
-	d.type IN ('missing_hours','missing_days')
-)
+	where d.emp_ID = @employee_ID AND month(d.date) = @month AND year(d.date) = year(getdate()) AND
+		d.type IN ('missing_hours','missing_days')
+) 
 
 go
 
@@ -144,7 +144,7 @@ end
 declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id order by r.rank asc)
-declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
+declare @dept_name varchar(50) = (select top 1 e.dept_name from Employee e where e.employee_ID=@employee_id);
 declare @rank int = (select min(rank) from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id)
