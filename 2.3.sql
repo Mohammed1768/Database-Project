@@ -40,7 +40,7 @@ BEGIN -- no need to update status if the employee is resigned
         WHERE employee_ID = @Employee_ID;
     END
 
-    IF(@IS_On_Leave = 0 AND @prevStatus = 'onleave') -- assume that previosly on leave employees are active
+    IF(@IS_On_Leave = 0 AND @prevStatus = 'onleave') -- assume that previosly on leave employees are active 
     BEGIN
         UPDATE Employee
         SET employment_status = 'active'

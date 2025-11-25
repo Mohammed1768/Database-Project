@@ -55,7 +55,7 @@ WHERE Leave_ID > 1;
 
 
 -- check the leave tables and Employee_Approve_Leave table
-SELECT * FROM Compensation_Leave a 
+SELECT * FROM Annual_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID 
 where l.request_ID >1;
 
@@ -69,10 +69,17 @@ select * from Employee e where e.employee_ID=4;
 -------------------------------------------------------------------------------
 
 INSERT INTO Attendance(emp_ID, status, date)
-VALUES (1, 'attended', '11-15-2025');
+VALUES (2, 'attended', '11-15-2025');
 
 SELECT * FROM Attendance;
 
-EXEC Submit_compensation 5, '11-29-2025', '1231', '11-16-2025', 4;
+EXEC Submit_compensation 2, '11-29-2025', '1231', '11-16-2025', 4;
 
-E
+EXEC Submit_annual 4, 5, '11-26-2026', '11-27-2026';
+
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=4;
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=5;
+
+exec Upperboard_approve_annual 35, 10, 5;
+exec HR_approval_an_acc 35, 10;
+

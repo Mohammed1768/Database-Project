@@ -291,8 +291,8 @@ if not exists(
 
 declare @status varchar(50) = 'approved';
 
-declare @start_date date = (select start_date from Leave where request_ID = @request_ID);
-declare @end_date date = (select end_date from Leave where request_ID = @request_ID);
+declare @start_date date = (select top 1 start_date from Leave where request_ID = @request_ID);
+declare @end_date date = (select top 1 end_date from Leave where request_ID = @request_ID);
 
 declare @employee_id int = (
     select top 1 emp_ID
