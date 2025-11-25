@@ -9,7 +9,8 @@ INNER JOIN   Employee_Role er ON (e.employee_ID = er.emp_ID)
 GROUP BY er.role_name;
 
 -- show the details of a specific employee
-select * from Employee e where e.employee_ID=4
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=11
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=5
 
 -- submit a request for the selcted employee
 EXEC Submit_annual

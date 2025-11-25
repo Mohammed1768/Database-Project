@@ -144,7 +144,6 @@ declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
-
 declare @rank int = (select min(rank) from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id)
@@ -167,7 +166,6 @@ begin
 	end
 end
 
-
 -- if employee is in the HR departement
 if exists(
 	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
@@ -184,7 +182,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -379,7 +377,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -496,7 +494,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -634,7 +632,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -777,7 +775,7 @@ Begin
 
 	-- hr representative
 	declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-			on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+			on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
 
 
 	-- if @hr_rep is not active -> set @hr_representative to their replacement
