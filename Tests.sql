@@ -694,13 +694,6 @@ values (5,20,'pending') --HR_MET
 
 exec Submit_annual 5, 4, '09-04-2025', '12-04-2025' ;
 
-('Mohamed','Ahmed','mohamed.ahmedy@guc.edu.eg','9087',
-'Nasr City',
-'M','Saturday',7,'1234567890123452','active','part_time',
-'Marwan Samir','01234567897',
-NULL,6,'09-01-2025',NULL,'BI')
-
-
 select employee_ID, employment_status, dept_name, role_name from Employee, Employee_Role WHERE Employee_Role.emp_ID = Employee.employee_ID
 select * from Leave, Annual_Leave where Annual_Leave.request_ID = Leave.request_ID 
 
