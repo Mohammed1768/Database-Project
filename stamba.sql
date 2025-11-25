@@ -22,17 +22,17 @@ EXEC Submit_annual
 -- check the leave tables and Employee_Approve_Leave table
 SELECT * FROM Annual_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID 
-where l.request_ID > 48
+where l.request_ID > 50
 
 SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-WHERE Leave_ID > 48
+WHERE Leave_ID > 50
 
 
 -- check that the status of the leave after the review from the HR and the Upper board 
 
-exec Upperboard_approve_annual 49, 16, 12;
-exec HR_approval_an_acc 49,5;
+exec Upperboard_approve_annual 51, 16, 12;
+exec HR_approval_an_acc 51,5;
 
 
 -- check the leave tables and Employee_Approve_Leave table
