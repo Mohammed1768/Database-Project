@@ -4,7 +4,6 @@
 *   (= ._.)
 *   / >  \>
 */
-
 use University_HR_ManagementSystem_Team_No_12;
 GO
 
@@ -24,19 +23,39 @@ AS
     WHERE EXISTS (SELECT 1 FROM Employee WHERE Employee.employee_ID = Deduction.emp_id AND Employee.employment_status = 'resigned')
 GO
 
+
+/*
+    Comment from Ahmad Hesham Fathy, 61-6552, T16
+    "hot comment enenena 3amleen assumption en el on leave hayeb2a active"
+*/
 --2.3 c):
 CREATE OR ALTER PROC Update_Employment_Status 
     @Employee_ID int
 AS
 BEGIN
     DECLARE @Is_On_Leave BIT = dbo.Is_On_Leave(@Employee_ID, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE));
+    declare @prev varchar(50) = (select employment_status from Employee where employee_ID=@Employee_ID)
+
+    if @prev = 'resigned'
+    return
 
     IF (@Is_On_Leave=1)
     BEGIN
         UPDATE Employee
         SET employment_status = 'onleave'
         WHERE employee_ID = @Employee_ID;
+        return
     END
+
+    if (@prev = 'onleave')
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'active'
+        WHERE employee_ID = @Employee_ID;
+        return
+    END
+
+ 
 END;
 GO
 
@@ -156,7 +175,6 @@ CREATE OR ALTER PROCEDURE Replace_employee
     @to_date DATE
 AS
 BEGIN
-
     INSERT INTO Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date)
     VALUES (@Emp1_ID, @Emp2_ID, @from_date, @to_date);
 END;
