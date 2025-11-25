@@ -318,7 +318,6 @@ begin
 end;
 go
 
-
 -- 2.1 e):
 create or alter procedure clearAllTables as 
 begin
@@ -344,4 +343,218 @@ begin
 end;
 go
 
+-- 2.2 a):
+Create or alter View allEmployeeProfiles As 
+    Select 
+        employee_ID , first_name , last_name, gender , email, address, years_of_experience, 
+            official_day_off, type_of_contract, employment_status, annual_balance, accidental_balance
+    From Employee;
+Go 
+
+-- 2.2 b):
+Create or alter View NoEmployeeDept As 
+    Select dept_name, count(employee_ID) as NoOfEmployees
+    from Employee
+    where dept_name is not null
+    group by dept_name;
+Go
+
+-- 2.2 c):
+Create or alter View allPerformance As 
+    Select * 
+    From Performance
+    Where semester LIKE 'W%';
+Go
+
+-- 2.2 d):
+Create or alter View allRejectedMedicals As
+    Select
+        ml.request_ID, ml.Emp_ID AS employee_ID, ml.insurance_status, ml.disability_details, ml.type,
+            l.date_of_request, l.start_date, l.end_date, l.num_days, l.final_approval_status
+    From Medical_Leave ml INNER JOIN Leave l 
+    On ml.request_ID = l.request_ID
+    Where l.final_approval_status = 'rejected';
+Go
+
+-- 2.2 e): 
+Create or alter View allEmployeeAttendance As
+    Select 
+        attendance_ID, emp_ID, date, check_in_time, check_out_time, total_duration, status
+    From Attendance
+    Where date = CAST(DATEADD(day, -1, GETDATE()) AS DATE);
+Go
+
+
+-- 2.3 a):
+CREATE OR ALTER PROC Update_Status_Doc
+AS
+    UPDATE Document
+    SET status = 'expired'
+    WHERE expiry_date < CAST(GETDATE() AS DATE);
+GO
+
+-- 2.3 b):
+CREATE OR ALTER PROC Remove_Deductions
+AS
+    DELETE FROM Deduction
+    WHERE EXISTS (SELECT 1 FROM Employee WHERE Employee.employee_ID = Deduction.emp_id AND Employee.employment_status = 'resigned')
+GO
+
+/*
+    Comment from Ahmad Hesham Fathy, 61-6552, T16, 
+    "hot comment enenena 3amleen assumption en el on leave hayeb2a active"
+
+	for more information -> contact ahmed.abdelmajid@student.guc.edu.eg
+*/
+--2.3 c):
+CREATE OR ALTER PROC Update_Employment_Status 
+    @Employee_ID int
+AS
+BEGIN
+    DECLARE @Is_On_Leave BIT = dbo.Is_On_Leave(@Employee_ID, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE));
+    declare @prev varchar(50) = (select employment_status from Employee where employee_ID=@Employee_ID)
+
+    if @prev = 'resigned'
+    return
+
+    IF (@Is_On_Leave=1)
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'onleave'
+        WHERE employee_ID = @Employee_ID;
+        return
+    END
+
+    if (@prev = 'onleave')
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'active'
+        WHERE employee_ID = @Employee_ID;
+        return
+    END
+
+ 
+END;
+GO
+
+-- 2.3 d):
+CREATE OR ALTER PROC Create_Holiday
+AS
+    CREATE TABLE Holiday(
+	    holiday_id INT PRIMARY KEY IDENTITY(1,1),
+	    name VARCHAR(50),
+	    from_date DATE,
+	    to_date DATE,
+	    CHECK (from_date <= to_date)
+    );
+GO
+
+-- 2.3 e):
+CREATE OR ALTER PROC Add_Holiday
+    @holiday_name VARCHAR(50),
+    @from_date DATE,
+    @to_date DATE
+AS
+    INSERT INTO Holiday (name, from_date, to_date)
+    VALUES(@holiday_name, @from_date, @to_date)
+GO
+
+-- 2.3 f):
+CREATE OR ALTER PROCEDURE Initiate_Attendance 
+AS 
+    INSERT INTO Attendance(emp_ID, date) 
+    SELECT E.employee_ID, CAST(GETDATE() AS DATE) 
+    FROM Employee E 
+    WHERE NOT EXISTS ( 
+        SELECT 1 
+        FROM Attendance A 
+        WHERE A.emp_ID = E.employee_ID 
+          AND A.date = CAST(GETDATE() AS DATE) 
+    ); 
+GO
+
+--2.3 g):
+CREATE OR ALTER PROCEDURE Update_Attendance
+    @employee_id INT,
+    @check_in_time TIME,
+    @check_out_time TIME
+AS
+    UPDATE Attendance 
+    SET check_in_time = @check_in_time,
+        check_out_time = @check_out_time,
+        status = CASE WHEN (@check_in_time IS NOT NULL) AND (@check_out_time IS NOT NULL) THEN 'attended' ELSE 'absent' END
+    WHERE emp_ID = @employee_id AND date = CAST(GETDATE() AS DATE);
+GO
+
+-- 2.3 h):
+CREATE OR ALTER PROC Remove_Holiday
+AS
+    DELETE FROM Attendance
+    WHERE EXISTS (
+        SELECT 1
+	    FROM Holiday
+        WHERE Attendance.date Between Holiday.from_date AND Holiday.to_Date
+    );
+GO
+
+-- 2.3 i):
+CREATE OR ALTER PROCEDURE Remove_DayOff
+    @Employee_ID INT
+AS
+BEGIN
+    DECLARE @DayOff VARCHAR(50);
+
+    SELECT @DayOff = official_day_off
+    FROM Employee
+    WHERE employee_ID = @Employee_ID;
+
+    DELETE FROM Attendance
+    WHERE emp_ID = @Employee_ID
+      AND status = 'absent'
+      AND DATENAME(WEEKDAY, date) = @DayOff
+      AND MONTH(date) = MONTH(GETDATE())
+      AND YEAR(date) = YEAR(GETDATE());
+END;
+GO
+
+-- 2.3 j): 
+CREATE OR ALTER PROCEDURE remove_approved_leaves
+    @employee_id INT
+AS
+BEGIN
+    DELETE FROM Attendance
+    WHERE emp_ID = @employee_id
+      AND EXISTS (
+          SELECT 1
+          FROM Leave L
+          WHERE L.final_approval_status = 'approved'
+           AND Attendance.date BETWEEN L.start_date AND L.end_date
+            AND L.request_ID IN (
+                SELECT request_ID FROM Annual_Leave WHERE emp_ID = @employee_id
+                UNION
+                SELECT request_ID FROM Accidental_Leave WHERE emp_ID = @employee_id
+                UNION
+                SELECT request_ID FROM Medical_Leave WHERE Emp_ID = @employee_id
+                UNION
+                SELECT request_ID FROM Unpaid_Leave WHERE Emp_ID = @employee_id
+                UNION
+                SELECT request_ID FROM Compensation_Leave WHERE emp_ID = @employee_id
+            )
+      );
+END;
+GO
+
+--2.3 k): 
+--Note: Employee 2 replaces employee 1 
+CREATE OR ALTER PROCEDURE Replace_employee
+    @Emp1_ID INT,    
+    @Emp2_ID INT,     
+    @from_date DATE,
+    @to_date DATE
+AS
+BEGIN
+    INSERT INTO Employee_Replace_Employee (Emp1_ID, Emp2_ID, from_date, to_date)
+    VALUES (@Emp1_ID, @Emp2_ID, @from_date, @to_date);
+END;
+GO
 

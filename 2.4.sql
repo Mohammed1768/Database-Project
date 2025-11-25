@@ -501,7 +501,6 @@ declare @salary decimal(10,2) = (select top 1 salary from Employee e where e.emp
 if @deduction_amount is null
 	set @deduction_amount = 0
 
-
 -- payment_date, final_salary_amount, from_date, to_date, bonus_amount, deduction_amount, emp_ID
 insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus_amount, deductions_amount, emp_ID) 
 			values(cast(getdate() as date), @salary + @bonus - @deduction_amount, @from, @to, @bonus, @deduction_amount, @employee_id);
