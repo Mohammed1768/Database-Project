@@ -109,43 +109,13 @@ where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
 if @final_status = 'approved'
 begin
-	-- check if replacement record already exists (prevents double processing)
-	if exists(
-		select 1 from Employee_Replace_Employee 
-		where Emp1_ID=@employee_id AND Emp2_ID=@replacement_emp 
-		AND from_date=@start_date AND to_date=@end_date
-	)
-	return; -- already processed, don't deduct again
-
 	-- deduct balance AFTER validation but BEFORE replacement
 	update Employee
 	set annual_balance = annual_balance - @num_days
 	where employee_ID=@employee_id
 
-	-- use Replace_employee procedure which handles ALL validations
+	-- use Replace_employee procedure 
 	exec Replace_employee @employee_id, @replacement_emp, @start_date, @end_date
-	
-	-- check if replacement record was created successfully
-	if not exists(
-		select 1 from Employee_Replace_Employee 
-		where Emp1_ID=@employee_id AND Emp2_ID=@replacement_emp 
-		AND from_date=@start_date AND to_date=@end_date
-	)
-	begin
-		-- rollback balance deduction since replacement failed
-		update Employee
-		set annual_balance = annual_balance + @num_days
-		where employee_ID=@employee_id
-		
-		-- update status to rejected since replacement failed
-		update Leave 
-		set final_approval_status = 'rejected'
-		where request_ID = @request_ID
-		
-		update Employee_Approve_Leave
-		set status = 'rejected'
-		where Leave_ID=@request_ID and Emp1_ID=@HR_ID
-	end
 end
 
 end
@@ -389,14 +359,13 @@ set status = @status
 where Leave_ID=@request_ID and Emp1_ID=@HR_ID
 
 if @status='approved'
+begin
 EXEC Replace_employee 
         @Emp1_ID=@emp_id,
         @Emp2_ID=@replacement_emp,
         @from_date=@date,
         @to_date=@date;
-
-
-
+end
 end
 go
 
@@ -413,7 +382,7 @@ begin
 		
 	declare @seconds int = (
 		select sum(datediff(second, '00:00:00', total_duration)) from Attendance a 
-		where
+		where a.emp_ID=@employee_ID and
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	); 
 	declare @hours int = @seconds / (60 * 60);
