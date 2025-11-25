@@ -175,7 +175,13 @@ if exists(
 begin
 	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
-			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+	if @manager is null
+		begin 
+			update Leave
+			set final_approval_status='rejected' where request_ID=@request_id
+			return
+		end
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
 	return
@@ -194,7 +200,13 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) not in 
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status='active')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+if @hr_rep is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -211,6 +223,13 @@ if @rank>=5
 			where r.rank in (3,4) and e.employment_status in ('active', 'notice_period') and e.dept_name=@dept_name
 			order by r.rank asc
 		)
+		if @dean is null
+		begin 
+			update Leave
+			set final_approval_status='rejected' where request_ID=@request_id
+			return
+		end
+
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@dean, @request_id)
 	end
 if @rank<5 
@@ -384,6 +403,12 @@ begin
 	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
 			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+	if @manager is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
 	return
@@ -403,6 +428,13 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) not in 
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+
+if @hr_rep is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 end
@@ -487,6 +519,12 @@ end
 declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%' and e.employment_status in ('active', 'notice_period'))
 
 -- request should be approved by a doctor
+if @doctor is null
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 insert into Employee_Approve_Leave values(@doctor, @request_id, 'pending');
 
 
@@ -520,6 +558,12 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) not in 
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+if @hr_rep is null
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -623,8 +667,11 @@ declare @upper_board int = (
 	order by r.rank desc
 ) 
 if @upper_board is null
-set @upper_board = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'Vice President')
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
@@ -639,6 +686,12 @@ begin
 	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
 			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+	if @manager is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
 	return
@@ -657,10 +710,15 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) not in 
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+if @hr_rep is null
+begin 
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_id
+	return
+end
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
-
 
 
 
@@ -672,8 +730,15 @@ begin
 		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (r.role_name = er.role_name) 
 		where r.rank<@rank and e.dept_name=@dept_name and e.employment_status in ('active', 'notice_period')
-		order by r.rank asc
+		order by r.rank desc
 	)
+	if @higher_ranking is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
+
 	insert into Employee_Approve_Leave values(@higher_ranking, @request_id, 'pending');
 
 end
@@ -782,6 +847,12 @@ Begin
 		-- we only require approval from the manager
 		declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
 				on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+		if @manager is null
+		begin 
+			update Leave
+			set final_approval_status='rejected' where request_ID=@leaveID
+			return
+		end
 
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @leaveID)
 		return
@@ -801,6 +872,12 @@ Begin
 	if @hr_rep is null
 	set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
 			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+	if @hr_rep is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@leaveID
+		return
+	end
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @leaveID)
 End;
