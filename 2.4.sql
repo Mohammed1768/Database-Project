@@ -349,9 +349,13 @@ create or alter proc Deduction_hours
 @employee_ID int
 as 
 begin
+	
+	-- delete all previously added deductions from the current month
+	delete from Deduction where
+		 type = 'missing_hours' and @employee_ID = emp_ID and 
+		 month(date)=month(getdate()) and year(date)=year(getdate());
 
 	-- hourly rate = salary / (22 days * 8 hours)
-
 	declare @rate decimal(10,2) = (select top 1 salary from Employee e	
 		where e.employee_ID = @employee_ID) / (22 * 8);	
 		
@@ -373,7 +377,7 @@ begin
 
 	--  			     (emp_ID, date, amount, type, status, attendance_ID)
 	insert into Deduction(emp_ID, date, amount, type, status, attendance_ID) 
-		values(@employee_ID, getdate(), ((22 * 8) - @hours)*@rate, 'missing_hours', 'finalized', @attendance);
+		values(@employee_ID, cast(getdate() as date), ((22 * 8) - @hours)*@rate, 'missing_hours', 'finalized', @attendance);
 end
 go
 
@@ -408,7 +412,13 @@ create or alter proc Deduction_unpaid
 @employee_ID int
 as 
 begin
-	
+
+	-- delete all previously added deductions from the current month
+	delete from Deduction where
+		 type = 'unpaid' and @employee_ID = emp_ID and 
+		 month(date)=month(getdate()) and year(date)=year(getdate());
+
+
 	-- useful variables
 	declare @CurrentMonthStart date = datefromparts(year(getdate()), month(getdate()), 1);
     declare @CurrentMonthEnd   date = eomonth(getdate());
@@ -436,7 +446,7 @@ begin
 
 	-- calculate the cost
 	update #very_cool_tmp_table_67
-		set cost = day(end_date - start_date + 1) * @daily_rate;
+		set cost = (DATEDIFF(day, start_date, end_date) + 1) * @daily_rate;
 
 
 	insert into Deduction(emp_ID, date, amount, type, status, unpaid_ID) 
