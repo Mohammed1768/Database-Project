@@ -1,5 +1,5 @@
 
-use University_HR_ManagementSystem_Team_122;
+use University_HR_ManagementSystem_Team_No_12;
 go -- Keep this to switch the database context
 
 -- get an employee for every role
@@ -10,29 +10,30 @@ GROUP BY er.role_name;
 
 -- show the details of a specific employee
 select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=11
-select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=12
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=5
 select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name='Vice Dean'
 
 -- submit a request for the selcted employee
-EXEC Submit_annual
-    4, 5,
-    '2026-11-26',
-    '2026-11-27';
+EXEC Submit_unpaid
+    5,
+    '2025-11-26',
+    '2025-11-26', null, null;
+
+-- select * from Leave l inner join Compensation_Leave a on (l.request_ID=a.request_ID) 
 
 -- check the leave tables and Employee_Approve_Leave table
-SELECT * FROM Annual_Leave a 
+SELECT * FROM Medical_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID 
-where l.request_ID > 22
+where l.request_ID > 36
 
 SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)
-WHERE Leave_ID > 22
+WHERE Leave_ID > 36
 
 
 -- check that the status of the leave after the review from the HR and the Upper board 
 
-exec Upperboard_approve_annual 23, 10, 5;
-exec HR_approval_an_acc 23,10;
+exec HR_approval_an_acc 36,10;
 
 select * from Employee_Replace_Employee
 

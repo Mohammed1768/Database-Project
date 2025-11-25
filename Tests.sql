@@ -5,7 +5,7 @@
 *   / >  \>
 */
 
-use University_HR_ManagementSystem_Team_122;
+use University_HR_ManagementSystem_Team_No_12;
 go
 
 -- exec createAllTables

@@ -59,6 +59,17 @@ Return
 );
 Go
 
+
+
+
+
+
+-- this is the 67th line in our IDE, we have reserved it for TUFFness
+-- BOI
+-- BOI
+
+
+
 -- 2.5) e
 create or alter function Deductions_Attendance
 (@employee_ID int, @month int)
@@ -112,7 +123,7 @@ as
 begin
 
 -- if invalid request
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 -- update the leave tables
@@ -306,7 +317,7 @@ declare @employee_id int = (
         select emp_ID from Medical_Leave where request_ID = @request_id
 								UNION 
         select emp_ID from Unpaid_Leave where request_ID = @request_id
-    ) as six_sevennnnnn														-- ts is soo tuff
+    ) as six_sevennnnnn													-- ts is soo tuff
 );
 
 
@@ -347,7 +358,7 @@ create or alter proc Submit_accidental
 as
 begin
 
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 --		Leave(request_ID, date_of_request, start_date, end_date, final_approval_status)
@@ -464,7 +475,7 @@ create or alter proc Submit_medical
 AS
 begin
 
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 
@@ -596,7 +607,7 @@ CREATE or alter proc Submit_unpaid
 AS
 begin
 
-if (@start_date>@end_date) 
+if (cast(@start_date as date)>cast(@start_date as date)) 
 return
 
 
