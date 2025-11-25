@@ -797,6 +797,19 @@ begin
 	set final_approval_status='rejected' where request_ID=@request_ID
 end
 
+
+ IF @status='approved'
+    BEGIN
+        IF NOT EXISTS (
+            SELECT * 
+            FROM Employee_Approve_Leave
+            WHERE Leave_ID=@request_ID AND status='pending'
+        )
+            UPDATE Leave
+            SET final_approval_status='approved'
+            WHERE request_ID=@request_ID;
+    END
+
 End;
 Go
 
