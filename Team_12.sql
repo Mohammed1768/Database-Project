@@ -264,7 +264,9 @@ begin
 end;
 go
 
-
+-- to be removed
+exec createAllTables
+go
 
 -- 2.1 c):
 -- delete the tables in a revere topological order
@@ -402,12 +404,6 @@ AS
     WHERE EXISTS (SELECT 1 FROM Employee WHERE Employee.employee_ID = Deduction.emp_id AND Employee.employment_status = 'resigned')
 GO
 
-/*
-    Comment from Ahmad Hesham Fathy, 61-6552, T16, 
-    "hot comment enenena 3amleen assumption en el on leave hayeb2a active"
-
-	for more information -> contact ahmed.abdelmajid@student.guc.edu.eg
-*/
 --2.3 c):
 CREATE OR ALTER PROC Update_Employment_Status 
     @Employee_ID int
