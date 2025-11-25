@@ -464,7 +464,7 @@ begin
 
 	declare @seconds int = (
 		select sum(datediff(second, '00:00:00', total_duration)) from Attendance a 
-		where
+		where a.emp_ID=@employee_id and
 		month(a.date) = month(getdate()) and year(a.date) = year(getdate())
 	); 
 	declare @hours int = @seconds / (60 * 60);
