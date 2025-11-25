@@ -11,6 +11,7 @@ go
 use University_HR_ManagementSystem_Team_No_12;
 go
 
+
 -- 2.1 b) helper function: CREATE IT BEFORE CREATING TABLES!
 create or alter function getsalary(@employee_id int)
 returns decimal(10,2)
@@ -262,6 +263,7 @@ begin
 	);
 end;
 go
+
 
 -- 2.1 c):
 -- delete the tables in a revere topological order
