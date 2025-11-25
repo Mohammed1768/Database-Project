@@ -370,6 +370,16 @@ if @replacement_emp IS NULL set @status = 'rejected'
 if (datename(WEEKDAY, @date_of_original_work_day) <> @day_off)
 set @status = 'rejected'
 
+---- Check if compensation date falls on replacement's official day-off
+DECLARE @replacement_dayoff VARCHAR(50) = (
+    SELECT official_day_off 
+    FROM Employee 
+    WHERE employee_ID = @replacement_emp
+);
+
+IF DATENAME(WEEKDAY, @date) = @replacement_dayoff
+    SET @status = 'rejected';
+
 update Leave 
 set final_approval_status = @status
 where request_ID = @request_ID
