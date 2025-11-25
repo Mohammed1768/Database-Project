@@ -492,7 +492,7 @@ as
 begin
 
 declare @bonus decimal(10,2) = dbo.Bonus_amount(@employee_id)	
-declare @deduction_amount decimal(10,2) = (select sum(amount) from Deduction d where d.date<=@to and d.date>=@from)
+declare @deduction_amount decimal(10,2) = (select sum(amount) from Deduction d where d.emp_ID=@employee_id and d.date<=@to and d.date>=@from)
 
 declare @salary decimal(10,2) = (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
 
