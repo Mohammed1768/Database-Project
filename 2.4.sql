@@ -478,7 +478,7 @@ begin
 			order by r.rank asc);
 
 	declare @bonus int = (@hours - 22*8) * @rate * @factor * 0.01;
-	if (@bonus <= 0) return 0;
+	if (@bonus is null or @bonus <= 0) return 0;
 	return @bonus;
 
 end
@@ -493,8 +493,11 @@ begin
 
 declare @bonus decimal(10,2) = dbo.Bonus_amount(@employee_id)	
 declare @deduction_amount decimal(10,2) = (select sum(amount) from Deduction d where d.emp_ID=@employee_id and d.date<=@to and d.date>=@from)
-
 declare @salary decimal(10,2) = (select top 1 salary from Employee e where e.employee_ID = @employee_ID);		
+
+if @deduction_amount is null
+	set @deduction_amount = 0
+
 
 -- payment_date, final_salary_amount, from_date, to_date, bonus_amount, deduction_amount, emp_ID
 insert into Payroll(payment_date, final_salary_amount, from_date, to_date, bonus_amount, deductions_amount, emp_ID) 
