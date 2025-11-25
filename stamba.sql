@@ -9,7 +9,9 @@ INNER JOIN   Employee_Role er ON (e.employee_ID = er.emp_ID)
 GROUP BY er.role_name;
 
 -- show the details of a specific employee
-select * from Employee e where e.employee_ID=4
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=11
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where e.employee_ID=5
+select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name='Vice President'
 
 -- submit a request for the selcted employee
 EXEC Submit_annual
@@ -20,7 +22,7 @@ EXEC Submit_annual
 -- check the leave tables and Employee_Approve_Leave table
 SELECT * FROM Annual_Leave a 
 JOIN Leave l ON a.request_ID = l.request_ID 
-where l.request_ID >1
+where l.request_ID > 1
 
 SELECT * FROM Employee_Approve_Leave el
 JOIN Employee_Role er ON (er.emp_ID = el.Emp1_ID)

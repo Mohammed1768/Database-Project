@@ -101,6 +101,7 @@ begin
 end
 go
 
+
 -- 2.5) g
 create or alter proc Submit_annual
 @employee_id int,
@@ -144,7 +145,6 @@ declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_id);
-
 declare @rank int = (select min(rank) from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_id)
@@ -167,7 +167,6 @@ begin
 	end
 end
 
-
 -- if employee is in the HR departement
 if exists(
 	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
@@ -184,10 +183,14 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
+<<<<<<< HEAD
 -- if @hr_rep is not active or on notice period -> set @hr_representative to their replacement
+=======
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+>>>>>>> main
 if ((select employment_status from Employee e where employee_ID=@hr_rep) not in ('active', 'notice_period'))
 	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
 		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
@@ -195,7 +198,11 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) not in 
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
+<<<<<<< HEAD
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status IN ('active', 'notice_period'))
+=======
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status='active')
+>>>>>>> main
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -209,7 +216,11 @@ if @rank>=5
 		declare @dean int = (
 			select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 			inner join Role r on (er.role_name=r.role_name)
+<<<<<<< HEAD
 			where r.rank in (3,4) and e.employment_status IN ('active', 'notice_period') and e.dept_name=@dept_name
+=======
+			where r.rank in (3,4) and e.employment_status in ('active', 'notice_period') and e.dept_name=@dept_name
+>>>>>>> main
 			order by r.rank asc
 		)
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@dean, @request_id)
@@ -221,9 +232,21 @@ if @rank<5
 		declare @president int = (
 			select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 			inner join Role r on (er.role_name=r.role_name)
+<<<<<<< HEAD
 			where r.rank in (1,2) and e.employment_status IN ('active', 'notice_period')
 			order by r.rank asc
+=======
+			where r.rank in (1,2) and e.employment_status in ('active', 'notice_period')
+			order by r.rank desc
+>>>>>>> main
 		)
+		-- if noone is available in the upper departement
+		if @president is null
+		begin 
+			update Leave
+			set final_approval_status='rejected' where request_ID=@request_id
+			return
+		end
 		insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@president, @request_id)
 	end
 	
@@ -231,19 +254,25 @@ end
 go
 
 
--- 2.5) h
-create or alter function Status_leaves() 
-returns Table
-as 
-return (
-	select l.request_ID, l.date_of_request, l.final_approval_status 
-	from Leave l left outer join Annual_Leave a on (l.request_ID = a.request_ID)
-	left outer join Accidental_Leave ac on (l.request_ID = ac.request_ID)
-
-	where month(l.date_of_request) = month(getdate()) and 
-	(a.request_ID is not null or ac.request_ID is not null)
+-- 2.5(h)
+CREATE OR ALTER FUNCTION Status_leaves(@employee_ID INT)
+RETURNS TABLE
+AS 
+RETURN (
+    SELECT 
+        l.request_ID, 
+        l.date_of_request, 
+        l.final_approval_status
+    FROM Leave l 
+    LEFT JOIN Annual_Leave a 
+        ON l.request_ID = a.request_ID AND a.emp_ID = @employee_ID
+    LEFT JOIN Accidental_Leave ac 
+        ON l.request_ID = ac.request_ID AND ac.emp_ID = @employee_ID
+    WHERE 
+        MONTH(l.date_of_request) = MONTH(GETDATE())
+        AND (a.request_ID IS NOT NULL OR ac.request_ID IS NOT NULL)
 );
-go
+GO
 
 -- 2.5) i
 create or alter proc Upperboard_approve_annual
@@ -371,7 +400,11 @@ if exists(
 begin
 	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+<<<<<<< HEAD
 			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status IN ('active', 'notice_period'))
+=======
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+>>>>>>> main
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
 	return
@@ -379,18 +412,27 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
+<<<<<<< HEAD
 -- if @hr_rep is not active or on notice period -> set @hr_representative to their replacement
 if ((select employment_status from Employee e where employee_ID=@hr_rep) NOT IN ('active', 'notice_period'))
+=======
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+if ((select employment_status from Employee e where employee_ID=@hr_rep) not in ('active', 'notice_period'))
+>>>>>>> main
 	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
 		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
 
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
+<<<<<<< HEAD
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status IN ('active', 'notice_period'))
+=======
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+>>>>>>> main
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 end
@@ -477,7 +519,11 @@ begin
 end
 
 -- get the id of the doctor
+<<<<<<< HEAD
 declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%' and e.employment_status IN ('active', 'notice_period'))
+=======
+declare @doctor int = (select top 1 employee_ID from Employee e where dept_name like 'Medical%' and e.employment_status in ('active', 'notice_period'))
+>>>>>>> main
 
 -- request should be approved by a doctor
 insert into Employee_Approve_Leave values(@doctor, @request_id, 'pending');
@@ -501,18 +547,27 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
+<<<<<<< HEAD
 -- if @hr_rep is not active or on notice period -> set @hr_representative to their replacement
 if ((select employment_status from Employee e where employee_ID=@hr_rep) NOT IN ('active', 'notice_period'))
+=======
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+if ((select employment_status from Employee e where employee_ID=@hr_rep) not in ('active', 'notice_period'))
+>>>>>>> main
 	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
 		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
 
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
+<<<<<<< HEAD
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status IN ('active', 'notice_period'))
+=======
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+>>>>>>> main
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -612,12 +667,16 @@ end
 declare @upper_board int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 	inner join Role r on (r.role_name = er.role_name)
+<<<<<<< HEAD
 	where r.role_name like 'Upper%' and e.employment_status IN ('active', 'notice_period')
+=======
+	where r.role_name like 'Upper%' and e.employment_status in ('active', 'notice_period')
+>>>>>>> main
 	order by r.rank desc
 ) 
 if @upper_board is null
 set @upper_board = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'Vice President')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'Vice President')
 
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
@@ -639,18 +698,27 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
+<<<<<<< HEAD
 -- if @hr_rep is not active or on notice period -> set @hr_representative to their replacement
 if ((select employment_status from Employee e where employee_ID=@hr_rep) NOT IN ('active', 'notice_period'))
+=======
+-- if @hr_rep is not active -> set @hr_representative to their replacement
+if ((select employment_status from Employee e where employee_ID=@hr_rep) not in ('active', 'notice_period'))
+>>>>>>> main
 	set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
 		Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
 
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
+<<<<<<< HEAD
 		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status  IN ('active', 'notice_period'))
+=======
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period')
+>>>>>>> main
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -664,7 +732,11 @@ begin
 	declare @higher_ranking int = (
 		select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (r.role_name = er.role_name) 
+<<<<<<< HEAD
 		where r.rank<@rank and e.dept_name=@dept_name and e.employment_status IN ('active', 'notice_period')
+=======
+		where r.rank<@rank and e.dept_name=@dept_name and e.employment_status in ('active', 'notice_period')
+>>>>>>> main
 		order by r.rank asc
 	)
 	insert into Employee_Approve_Leave values(@higher_ranking, @request_id, 'pending');
@@ -781,18 +853,27 @@ Begin
 
 	-- hr representative
 	declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-			on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_%',@dept_name))
+			on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
+<<<<<<< HEAD
 	-- if @hr_rep is not active or on notice period -> set @hr_representative to their replacement
 	if ((select employment_status from Employee e where employee_ID=@hr_rep) NOT IN ('active', 'notice_period'))
+=======
+	-- if @hr_rep is not active -> set @hr_representative to their replacement
+	if ((select employment_status from Employee e where employee_ID=@hr_rep) in ('active', 'notice_period'))
+>>>>>>> main
 		set @hr_rep = (select top 1 Emp1_ID from Employee_Replace_Employee where
 			Emp2_ID=@hr_rep and from_date<=CAST(GETDATE() AS DATE) and to_date>=CAST(GETDATE() AS DATE))
 
 	-- if no replacement is avaliable sent it to the HR Manager
 	if @hr_rep is null
 	set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
+<<<<<<< HEAD
 			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status IN ('active', 'notice_period'))
+=======
+			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active', 'notice_period'))
+>>>>>>> main
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @leaveID)
 End;

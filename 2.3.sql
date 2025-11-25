@@ -63,7 +63,7 @@ AS
 GO
 
 -- 2.3 e):
-CREATE OR ALTER PROC  Add_Holiday
+CREATE OR ALTER PROC Add_Holiday
     @holiday_name VARCHAR(50),
     @from_date DATE,
     @to_date DATE
