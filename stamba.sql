@@ -46,3 +46,4 @@ WHERE Leave_ID > 1;
 
 -- if annual/accidental leave you might want to check whether the employee's balance chnaged or not
 select * from Employee e where e.employee_ID=4
+
