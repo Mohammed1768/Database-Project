@@ -347,4 +347,3 @@ begin
 	delete from Department;
 end;
 go
-
