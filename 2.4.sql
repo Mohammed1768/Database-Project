@@ -28,16 +28,16 @@ create or alter proc HR_approval_on_annual
 as
 begin
 
--- employee is not supposed to approve the request
--- either invalid request or invalid employee
-if not exists(
-	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
-) return
-
 
 -- if the request does not exist in the annual table
 if not exists(
 	select * from Annual_Leave where request_ID=@request_ID
+) return
+
+-- employee is not supposed to approve the request
+-- either invalid request or invalid employee
+if not exists(
+	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
 ) return
 
 
@@ -56,9 +56,9 @@ end
 declare @current_status varchar(50) = (
     select final_approval_status from Leave where request_ID = @request_ID
 );
-
 if (@current_status = 'approved')
-    return; -- already processed, don't deduct balance again
+    return -- already processed, don't deduct balance again
+
 
 -- useful variables
 declare @num_days int = (select l.num_days from Leave l where l.request_ID = @request_ID);
@@ -74,23 +74,12 @@ declare @start_date date = (select l.start_date from Leave l where l.request_ID=
 declare @end_date date = (select l.end_date from Leave l where l.request_ID=@request_ID);
 declare @replacement_emp int = (select top 1 replacement_emp from Annual_Leave where request_id=@request_ID)
 
--- request or employee does not exist in the table
-if (@balance is null) 
-begin
-	update Leave 
-	set final_approval_status = 'rejected'			
-	where request_ID = @request_ID
-	return
-end
-
 
 declare @final_status varchar(50) = 'approved'
 
 -- if insufficient leave balance
-if (@balance<@num_days) set @final_status = 'rejected'; 
+if (@balance is null or @balance<@num_days) set @final_status = 'rejected'; 
 
--- check if replacement employee is NULL
-if (@replacement_emp IS NULL) set @final_status = 'rejected';
 
 -- check if employee already has overlapping approved leaves using Is_On_Leave function
 if @final_status = 'approved'
@@ -127,15 +116,15 @@ create or alter proc HR_approval_on_accidental
 as
 begin
 
+-- if the request does not exist in the accidental table
+if not exists(
+	select * from Accidental_Leave where request_ID=@request_ID
+) return
+
 -- employee is not supposed to approve the request
 -- either invalid request or invalid employee
 if not exists(
 	select * from Employee_Approve_Leave where Emp1_ID=@HR_ID and Leave_ID=@request_ID
-) return
-
--- if the request does not exist in the accidental table
-if not exists(
-	select * from Accidental_Leave where request_ID=@request_ID
 ) return
 
 
@@ -154,7 +143,6 @@ end
 declare @current_status varchar(50) = (
     select final_approval_status from Leave where request_ID = @request_ID
 );
-
 if (@current_status = 'approved')
     return; -- already processed, don't deduct balance again
 
@@ -302,7 +290,6 @@ end
 declare @emp_id int = (select top 1 e.employee_ID from Employee e 
 						 inner join Compensation_Leave c on (c.emp_ID = e.employee_ID)
 							where c.request_ID = @request_ID);
-
 declare @date date = (select top 1 l.start_date from Leave l where l.request_ID=@request_ID); 
 declare @day_off varchar(50) = (select official_day_off from Employee where employee_ID=@emp_id)
 declare @date_of_original_work_day date = (select date_of_original_workday from Compensation_Leave where request_ID=@request_ID)
@@ -320,35 +307,23 @@ if exists(
 if (MONTH(@date) <> MONTH(@date_of_original_work_day) OR YEAR(@date) <> YEAR(@date_of_original_work_day))
 	set @status = 'rejected'
 
-	declare @hours_worked int = (
+declare @hours_worked int = (
 	select DATEDIFF(hour, check_in_time, check_out_time)
 	from Attendance
 	where emp_ID = @emp_id 
 	  and date = @date_of_original_work_day
 );
-
 if (@hours_worked < 8 OR @hours_worked IS NULL)
 	set @status = 'rejected'
 
 if (dbo.Is_On_Leave(@replacement_emp, @date, @date) = 1)
 	set @status = 'rejected'
 
-if @replacement_emp IS NULL set @status = 'rejected'
-
 
 -- if date_of_original_workday is not the employee's day off
 if (datename(WEEKDAY, @date_of_original_work_day) <> @day_off)
 set @status = 'rejected'
 
----- Check if compensation date falls on replacement's official day-off
-DECLARE @replacement_dayoff VARCHAR(50) = (
-    SELECT official_day_off 
-    FROM Employee 
-    WHERE employee_ID = @replacement_emp
-);
-
-IF DATENAME(WEEKDAY, @date) = @replacement_dayoff
-    SET @status = 'rejected';
 
 update Leave 
 set final_approval_status = @status
