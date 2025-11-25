@@ -19,6 +19,7 @@ begin
 		building_location varchar(50)
 	);
 
+
 	create table Employee(
 		employee_ID int primary key identity(1,1), 
 		first_name varchar(50), last_name varchar (50), 
@@ -208,7 +209,7 @@ begin
 	);
 
 	create table Employee_Replace_Employee (
-		Table_ID int,
+		Table_ID int identity(1,1), 
 		Emp1_ID int, 
 		Emp2_ID int, 
 		from_date date, 
@@ -290,61 +291,55 @@ go
 -- 2.1 e):
 create or alter procedure clearAllTables as 
 begin
-	truncate table Employee_Approve_Leave;
-	truncate table Employee_Replace_Employee;
-	truncate table Performance;
-	truncate table Deduction;
-	truncate table Attendance;	
-	truncate table Payroll;
-	truncate table Document;
-	truncate table Compensation_Leave;
-	truncate table Unpaid_Leave;
-	truncate table Medical_Leave;
-	truncate table Accidental_Leave;
-	truncate table Annual_Leave;
-	truncate table Leave;
-	truncate table Role_existsIn_Department;
-	truncate table Employee_Role;
-	truncate table Role;
-	truncate table Employee_Phone;
-	truncate table Employee;
-	truncate table Department;
+	DELETE FROM Employee_Approve_Leave;
+	DELETE FROM Employee_Replace_Employee;
+	DELETE FROM Performance;
+	DELETE FROM Deduction;
+	DELETE FROM Attendance;	
+	DELETE FROM Payroll;
+	DELETE FROM Document;
+	DELETE FROM Compensation_Leave;
+	DELETE FROM Unpaid_Leave;
+	DELETE FROM Medical_Leave;
+	DELETE FROM Accidental_Leave;
+	DELETE FROM Annual_Leave;
+	DELETE FROM Leave;
+	DELETE FROM Role_existsIn_Department;
+	DELETE FROM Employee_Role;
+	DELETE FROM Role;
+	DELETE FROM Employee_Phone;
+	DELETE FROM Employee;
+	DELETE FROM Department;
 end;
 go
-
-
-
 
 -- helper function:
 create or alter function getsalary(@employee_id int)
 returns decimal(10,2)
 as 
 begin
+	declare @base_salary decimal(10,2) = (
+		select top 1 r.base_salary 
+		from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) 
+		inner join Role r on (r.role_name=er.role_name)
+		where e.employee_ID=@employee_id
+		order by r.rank asc
+		);
 
-declare @base_salary decimal(10,2) = (
-				select top 1 r.base_salary 
-				from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) 
-				inner join Role r on (r.role_name=er.role_name)
-				where e.employee_ID=@employee_id
-				order by r.rank asc
-				);
+	declare @YOE int = (
+		select top 1 years_of_experience 
+		from Employee 
+		where @employee_id=employee_ID
+		);
 
-declare @YOE int = (
-				select top 1 years_of_experience 
-				from Employee 
-				where @employee_id=employee_ID
-				);
+	declare @YOE_perc decimal(4,2) = (
+		select top 1 r.percentage_YOE 
+		from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) 
+		inner join Role r on (r.role_name=er.role_name)
+		where e.employee_ID=@employee_id
+		order by r.rank asc
+		);
 
-declare @YOE_perc decimal(4,2) = (
-				select top 1 r.percentage_YOE 
-				from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID) 
-				inner join Role r on (r.role_name=er.role_name)
-				where e.employee_ID=@employee_id
-				order by r.rank asc
-				);
-
-return @base_salary + (@YOE_perc/100) * @YOE * @base_salary;
-
+	return @base_salary + (@YOE_perc/100) * @YOE * @base_salary;
 end
 go
-
