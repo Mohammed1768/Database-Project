@@ -256,7 +256,7 @@ end
 go
 
 
--- 2.5(h)
+-- 2.5) h
 CREATE OR ALTER FUNCTION Status_leaves(@employee_ID INT)
 RETURNS TABLE
 AS 
@@ -310,10 +310,10 @@ declare @employee_id int = (
 );
 
 
-declare @dept_1 int = (
+declare @dept_1 varchar(50) = (
 	select dept_name from Employee e where e.employee_ID=@replacement_ID
 );
-declare @dept_2 int = (
+declare @dept_2 varchar(50) = (
 	select dept_name from Employee e where e.employee_ID=@employee_id
 );
 
@@ -325,6 +325,16 @@ if @dept_1 <> @dept_2
 update Employee_Approve_Leave 
 set status = @status 
 where Leave_ID=@request_ID and Emp1_ID=@Upperboard_ID;
+
+
+if @status = 'rejected'
+begin
+	update Employee_Approve_Leave 
+	set status='rejected' where Leave_ID=@request_ID
+
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_ID
+end
 
 end
 go
@@ -538,6 +548,12 @@ begin
 	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
 			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+	if @manager is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
 	return
@@ -606,10 +622,9 @@ declare @role varchar(50) = (select top 1 r.role_name from Employee e inner join
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_ID order by r.rank asc)
 declare @dept_name varchar(50) = (select e.dept_name from Employee e where e.employee_ID=@employee_ID);
-declare @gender char(1) = (select gender from Employee where @employee_ID=employee_ID)
 declare @type_of_contract varchar(50) = (select type_of_contract from Employee where @employee_ID=employee_ID)
 declare @duration int = datediff(day, @start_date, @end_date) + 1
-declare @rank varchar(50) = (select top 1 r.rank from Employee e inner join 
+declare @rank INT = (select top 1 r.rank from Employee e inner join 
 	Employee_Role er on (e.employee_ID=er.emp_ID) inner join Role r on (er.role_name = r.role_name)
 	where employee_ID=@employee_ID order by r.rank asc)
 
@@ -638,6 +653,25 @@ if exists(
 	return
 end
 
+-- if employee is in the HR departement
+if exists(
+	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
+	where er.role_name like 'HR%' and e.employee_ID=@employee_ID
+)
+begin
+	-- we only require approval from the manager
+	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
+			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status in ('active','notice_period'))
+	if @manager is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
+
+	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
+	return
+end
 
 
 -- if dean is submitting a request while vice dean is on leave, skip the request and vice versa
@@ -649,6 +683,7 @@ begin
 		select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 		inner join Role r on (er.role_name=r.role_name)
 		where e.dept_name=@dept_name and r.role_name in ('Dean', 'Vice Dean') and e.employee_ID<>@employee_ID
+		and e.employment_status in ('active','notice_period')
 		and dbo.Is_On_Leave(e.employee_ID, @start_date, @end_date) = 0
 	) begin
 		update Leave
@@ -663,8 +698,8 @@ end
 declare @upper_board int = (
 	select top 1 employee_ID from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
 	inner join Role r on (r.role_name = er.role_name)
-	where r.role_name like 'Upper%' and e.employment_status in ('active', 'notice_period')
-	order by r.rank desc
+	where r.rank in (1,2) and e.employment_status in ('active', 'notice_period')
+	order by r.rank asc 
 ) 
 if @upper_board is null
 begin 
@@ -675,27 +710,6 @@ end
 
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
-
-
--- if employee is in the HR departement
-if exists(
-	select * from Employee e inner join Employee_Role er on (e.employee_ID=er.emp_ID)
-	where er.role_name like 'HR%' and e.employee_ID=@employee_id
-)
-begin
-	-- we only require approval from the manager
-	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
-			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
-	if @manager is null
-	begin 
-		update Leave
-		set final_approval_status='rejected' where request_ID=@request_id
-		return
-	end
-
-	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
-	return
-end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
@@ -746,6 +760,7 @@ end
 end
 GO
 
+
 -- 2.5) m
 Create or alter Proc Upperboard_approve_unpaids
 	@request_ID int,
@@ -772,6 +787,15 @@ if not exists(
 update Employee_Approve_Leave 
 set status = @status
 where @request_ID=Leave_ID and @Upperboard_ID=Emp1_ID
+
+if @status = 'rejected'
+begin
+	update Employee_Approve_Leave 
+	set status='rejected' where Leave_ID=@request_ID
+
+	update Leave
+	set final_approval_status='rejected' where request_ID=@request_ID
+end
 
 End;
 Go
