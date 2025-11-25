@@ -548,6 +548,12 @@ begin
 	-- we only require approval from the manager
 	declare @manager int = (select top 1 e.employee_ID from Employee e inner join Employee_Role er
 			on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager')
+	if @manager is null
+	begin 
+		update Leave
+		set final_approval_status='rejected' where request_ID=@request_id
+		return
+	end
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@manager, @request_id)
 	return
