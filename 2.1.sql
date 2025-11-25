@@ -326,25 +326,25 @@ go
 -- 2.1 e):
 create or alter procedure clearAllTables as 
 begin
-	DELETE FROM Employee_Approve_Leave;
-	DELETE FROM Employee_Replace_Employee;
-	DELETE FROM Performance;
-	DELETE FROM Deduction;
-	DELETE FROM Attendance;	
-	DELETE FROM Payroll;
-	DELETE FROM Document;
-	DELETE FROM Compensation_Leave;
-	DELETE FROM Unpaid_Leave;
-	DELETE FROM Medical_Leave;
-	DELETE FROM Accidental_Leave;
-	DELETE FROM Annual_Leave;
-	DELETE FROM Leave;
-	DELETE FROM Role_existsIn_Department;
-	DELETE FROM Employee_Role;
-	DELETE FROM Role;
-	DELETE FROM Employee_Phone;
-	DELETE FROM Employee;
-	DELETE FROM Department;
+	delete from Employee_Approve_Leave;
+	delete from Employee_Replace_Employee;
+	delete from Performance;
+	delete from Deduction;
+	delete from Attendance;	
+	delete from Payroll;
+	delete from Document;
+	delete from Compensation_Leave;
+	delete from Unpaid_Leave;
+	delete from Medical_Leave;
+	delete from Accidental_Leave;
+	delete from Annual_Leave;
+	delete from Leave;
+	delete from Role_existsIn_Department;
+	delete from Employee_Role;
+	delete from Role;
+	delete from Employee_Phone;
+	delete from Employee;
+	delete from Department;
 end;
 go
 
