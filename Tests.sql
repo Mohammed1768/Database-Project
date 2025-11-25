@@ -622,16 +622,3 @@ insert into Employee_Approve_Leave (Emp1_ID,leave_ID,status)
 values (5,20,'pending')
 ------------------------------------------------------
 
-exec Submit_annual 5, 4, '09-04-2025', '12-04-2025' ;
-
-select employee_ID, employment_status, dept_name, role_name from Employee, Employee_Role WHERE Employee_Role.emp_ID = Employee.employee_ID
-select * from Leave, Annual_Leave where Annual_Leave.request_ID = Leave.request_ID 
-
-<<<<<<< HEAD
-select employee_ID, employment_status, dept_name, Role.role_name, Role.rank from Employee, Employee_Role, Role 
-WHERE Employee_Role.emp_ID = Employee.employee_ID and Employee_Role.role_name = Role.role_name
-
-select * from Employee_Approve_Leave;
-=======
-
->>>>>>> main

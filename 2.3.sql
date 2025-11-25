@@ -30,13 +30,23 @@ CREATE OR ALTER PROC Update_Employment_Status
 AS
 BEGIN -- no need to update status if the employee is resigned
     DECLARE @Is_On_Leave BIT = dbo.Is_On_Leave(@Employee_ID, CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE));
-
+    DECLARE @prevStatus Varchar(50); 
+    SELECT top 1 @prevStatus = e.employment_status FROM Employee e where e.employee_ID = @Employee_ID;
+    
     IF (@Is_On_Leave=1)
     BEGIN
         UPDATE Employee
         SET employment_status = 'onleave'
         WHERE employee_ID = @Employee_ID;
     END
+
+    IF(@IS_On_Leave = 0 AND @prevStatus = 'onleave') -- assume that previosly on leave employees are active
+    BEGIN
+        UPDATE Employee
+        SET employment_status = 'active'
+        WHERE employee_ID = @Employee_ID;
+    END
+    -- if not on leave and prevStatus is not on leave dont change the status;
 END;
 GO
 

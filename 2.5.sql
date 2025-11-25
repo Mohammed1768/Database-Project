@@ -713,7 +713,6 @@ Create or alter Proc Submit_compensation
 	@replacement_emp Int 
 As
 Begin
-
 	--Inserting leave request into its tables
 	Insert Into Leave (date_of_request, start_date, end_date) 
 	Values (Cast(GetDate() As Date), @compensation_date, @compensation_date);
