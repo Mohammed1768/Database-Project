@@ -90,7 +90,8 @@ if (@balance is null or @balance<@num_days) set @final_status = 'rejected';
 -- check if employee already has overlapping approved leaves using Is_On_Leave function
 if @final_status = 'approved'
 begin
-    if (dbo.Is_On_Leave(@employee_id, @start_date, @end_date) = 1)
+    if exists (select l.start_date,l.end_date from Leave l inner join Annual_Leave a on (l.request_ID=a.request_ID)
+		where l.final_approval_status='accepted' and l.start_date<=cast(@end_date as date) and l.end_date>=cast(@start_date as date))
         set @final_status = 'rejected'; -- employee already has overlapping leave
 end
 
@@ -216,7 +217,8 @@ if (@balance<1) set @hr_status = 'rejected';
 -- check if employee already has overlapping approved leaves using Is_On_Leave function
 if @hr_status = 'approved'
 begin
-    if (dbo.Is_On_Leave(@employee_id, @start_date, @end_date) = 1)
+    if exists (select l.start_date,l.end_date from Leave l inner join Accidental_Leave a on (l.request_ID=a.request_ID)
+		where l.final_approval_status='accepted' and l.start_date<=cast(@end_date as date) and l.end_date>=cast(@start_date as date))
         set @hr_status = 'rejected'; -- employee already has overlapping leave
 end
 
@@ -282,7 +284,9 @@ begin
 	return
 end
 
-declare @start_date datetime = (select start_date from Leave where request_ID=@request_ID);
+declare @start_date date = (select start_date from Leave where request_ID=@request_ID);
+declare @end_date date = (select start_date from Leave where request_ID=@request_ID);
+
 if (@start_date <= cast(getdate() as date))
 begin
 	update Leave 
@@ -293,6 +297,9 @@ end
 
 
 declare @status varchar(50) = 'approved';
+if exists (select l.start_date,l.end_date from Leave l inner join Unpaid_Leave a on (l.request_ID=a.request_ID)
+	where l.final_approval_status='accepted' and l.start_date<=cast(@end_date as date) and l.end_date>=cast(@start_date as date))
+set @status = 'rejected';
 
 update Leave 
 set final_approval_status = @status
@@ -372,8 +379,9 @@ declare @hours_worked int = (
 if (@hours_worked < 8 OR @hours_worked IS NULL)
 	set @status = 'rejected'
 
-if (dbo.Is_On_Leave(@replacement_emp, @date, @date) = 1)
-	set @status = 'rejected'
+if exists (select l.start_date,l.end_date from Leave l inner join Unpaid_Leave a on (l.request_ID=a.request_ID)
+	where l.final_approval_status='accepted' and l.start_date<=cast(@date as date) and l.end_date>=cast(@date as date))
+set @status = 'rejected';
 
 
 -- if date_of_original_workday is not the employee's day off
