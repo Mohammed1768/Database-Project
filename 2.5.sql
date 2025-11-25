@@ -182,7 +182,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -193,7 +193,7 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'act
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -377,7 +377,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -388,7 +388,7 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'act
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 end
@@ -494,7 +494,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -610,7 +610,7 @@ declare @upper_board int = (
 ) 
 if @upper_board is null
 set @upper_board = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'Vice President')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'Vice President')
 
 insert into Employee_Approve_Leave values(@upper_board, @request_id, 'pending')
 
@@ -632,7 +632,7 @@ end
 
 -- hr representative
 declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-		on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
+		on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
 -- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -643,7 +643,7 @@ if ((select employment_status from Employee e where employee_ID=@hr_rep) <> 'act
 -- if no replacement is avaliable sent it to the HR Manager
 if @hr_rep is null
 set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
-		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
+		Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status='active')
 
 insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @request_id)
 
@@ -775,7 +775,7 @@ Begin
 
 	-- hr representative
 	declare @hr_rep int = (select top 1 employee_ID from Employee e inner join Employee_Role r 
-			on (e.employee_ID = r.emp_ID) where r.role_name like concat('HR_Representative_',@dept_name))
+			on (e.employee_ID = r.emp_ID) where r.role_name = concat('HR_Representative_',@dept_name))
 
 
 	-- if @hr_rep is not active -> set @hr_representative to their replacement
@@ -786,7 +786,7 @@ Begin
 	-- if no replacement is avaliable sent it to the HR Manager
 	if @hr_rep is null
 	set @hr_rep = (select top 1 er.emp_ID from Employee e inner join 
-			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name like 'HR Manager' and e.employment_status='active')
+			Employee_Role er on (e.employee_ID=er.emp_ID) where er.role_name = 'HR Manager' and e.employment_status='active')
 
 	insert into Employee_Approve_Leave(Emp1_ID, Leave_ID) values(@hr_rep, @leaveID)
 End;
