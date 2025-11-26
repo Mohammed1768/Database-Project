@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\mohel\\OneDrive\\Documents\\Database-Project\\Milestone 3\\A_debug_a_day_keeps_the_stress_away_API_App\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A3935398-5FB2-49A9-8B2B-7C3CE1A0B767}|A_debug_a_day_keeps_the_stress_away_API\\A_debug_a_day_keeps_the_stress_away_API.csproj|c:\\users\\mohel\\onedrive\\documents\\database-project\\milestone 3\\a_debug_a_day_keeps_the_stress_away_api_app\\a_debug_a_day_keeps_the_stress_away_api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A3935398-5FB2-49A9-8B2B-7C3CE1A0B767}|A_debug_a_day_keeps_the_stress_away_API\\A_debug_a_day_keeps_the_stress_away_API.csproj|solutionrelative:a_debug_a_day_keeps_the_stress_away_api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\mohel\\OneDrive\\Documents\\Database-Project\\Milestone 3\\A_debug_a_day_keeps_the_stress_away_API_App\\A_debug_a_day_keeps_the_stress_away_API\\Program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:A_debug_a_day_keeps_the_stress_away_API\\Program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A3935398-5FB2-49A9-8B2B-7C3CE1A0B767}|A_debug_a_day_keeps_the_stress_away_API\\A_debug_a_day_keeps_the_stress_away_API.csproj|c:\\users\\mohel\\onedrive\\documents\\database-project\\milestone 3\\a_debug_a_day_keeps_the_stress_away_api_app\\a_debug_a_day_keeps_the_stress_away_api\\services\\sqlservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A3935398-5FB2-49A9-8B2B-7C3CE1A0B767}|A_debug_a_day_keeps_the_stress_away_API\\A_debug_a_day_keeps_the_stress_away_API.csproj|solutionrelative:a_debug_a_day_keeps_the_stress_away_api\\services\\sqlservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\mohel\\OneDrive\\Documents\\Database-Project\\Milestone 3\\A_debug_a_day_keeps_the_stress_away_API_App\\A_debug_a_day_keeps_the_stress_away_API\\Services\\SqlService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:A_debug_a_day_keeps_the_stress_away_API\\Services\\SqlService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -43,8 +43,7 @@
               "RelativeToolTip": "A_debug_a_day_keeps_the_stress_away_API\\Services\\SqlService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-26T15:00:11.218Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-26T15:00:11.218Z"
             }
           ]
         }

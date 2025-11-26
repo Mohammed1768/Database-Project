@@ -12,7 +12,7 @@ using System;
 using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("A_debug_a_day_keeps_the_stress_away_API")]
-[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3abac613fda04ab651fe17953b225d7c8562c58d")]
 [assembly: System.Reflection.AssemblyProductAttribute("A_debug_a_day_keeps_the_stress_away_API")]
