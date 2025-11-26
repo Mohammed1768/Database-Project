@@ -1,0 +1,6 @@
+@A_debug_a_day_keeps_the_stress_away_API_HostAddress = http://localhost:5064
+
+GET {{A_debug_a_day_keeps_the_stress_away_API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
