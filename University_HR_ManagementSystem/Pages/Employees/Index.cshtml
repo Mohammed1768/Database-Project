@@ -1,0 +1,144 @@
+﻿@page
+@model University_HR_ManagementSystem.Pages.Employees.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].FirstName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].LastName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].Password)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].Address)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].Gender)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].OfficialDayOff)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].YearsOfExperience)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].NationalID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].EmploymentStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].TypeOfContract)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].EmergencyContactName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].EmergencyContactPhone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].AnnualBalance)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].AccidentalBalance)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].Salary)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].HireDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].LastWorkingDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee[0].Department)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Employee) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FirstName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Password)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Address)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Gender)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.OfficialDayOff)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.YearsOfExperience)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NationalID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmploymentStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TypeOfContract)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmergencyContactName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmergencyContactPhone)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AnnualBalance)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AccidentalBalance)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Salary)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.HireDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastWorkingDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Department.DeptName)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.EmployeeId">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.EmployeeId">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.EmployeeId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
