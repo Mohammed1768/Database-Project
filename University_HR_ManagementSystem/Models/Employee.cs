@@ -78,9 +78,12 @@ namespace University_HR_ManagementSystem.Models
         [Column("accidental_balance")]
         public int AccidentalBalance { get; set; }
 
-        // Salary is computed in the database
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        [Column("salary")]
+        // Salary is computed in the database. To avoid SQL Server OUTPUT issues
+        // we do not map it directly to the EF model (EF would include it in
+        // INSERT ... OUTPUT which SQL Server rejects when the computed column
+        // depends on functions that perform data access). Use a separate query
+        // to read the computed salary when needed.
+        [NotMapped]
         public decimal Salary { get; set; }
 
         [Column("hire_date")]

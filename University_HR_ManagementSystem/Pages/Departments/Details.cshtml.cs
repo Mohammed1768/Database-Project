@@ -8,18 +8,17 @@ using Microsoft.EntityFrameworkCore;
 using University_HR_ManagementSystem.Data;
 using University_HR_ManagementSystem.Models;
 
-namespace University_HR_ManagementSystem.Pages.Departements
+namespace University_HR_ManagementSystem.Pages.Departments
 {
-    public class DeleteModel : PageModel
+    public class DetailsModel : PageModel
     {
         private readonly University_HR_ManagementSystem.Data.University_HR_ManagementSystemContext _context;
 
-        public DeleteModel(University_HR_ManagementSystem.Data.University_HR_ManagementSystemContext context)
+        public DetailsModel(University_HR_ManagementSystem.Data.University_HR_ManagementSystemContext context)
         {
             _context = context;
         }
 
-        [BindProperty]
         public Department Department { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
@@ -30,7 +29,6 @@ namespace University_HR_ManagementSystem.Pages.Departements
             }
 
             var department = await _context.Department.FirstOrDefaultAsync(m => m.Name == id);
-
             if (department == null)
             {
                 return NotFound();
@@ -40,24 +38,6 @@ namespace University_HR_ManagementSystem.Pages.Departements
                 Department = department;
             }
             return Page();
-        }
-
-        public async Task<IActionResult> OnPostAsync(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var department = await _context.Department.FindAsync(id);
-            if (department != null)
-            {
-                Department = department;
-                _context.Department.Remove(Department);
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToPage("./Index");
         }
     }
 }
