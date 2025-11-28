@@ -16,5 +16,6 @@ namespace University_HR_ManagementSystem.Data
 
         public DbSet<University_HR_ManagementSystem.Models.Employee> Employee { get; set; } = default!;
         public DbSet<University_HR_ManagementSystem.Models.Department> Department { get; set; } = default!;
+
     }
 }

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using University_HR_ManagementSystem.Data;
 using University_HR_ManagementSystem.Models;
 
-namespace University_HR_ManagementSystem.Pages.Departments
+namespace University_HR_ManagementSystem.Pages.Departements
 {
     public class IndexModel : PageModel
     {

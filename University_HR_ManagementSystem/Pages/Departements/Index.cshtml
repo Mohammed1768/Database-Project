@@ -1,5 +1,5 @@
 ﻿@page
-@model University_HR_ManagementSystem.Pages.Departments.IndexModel
+@model University_HR_ManagementSystem.Pages.Departements.IndexModel
 
 @{
     ViewData["Title"] = "Index";
@@ -26,9 +26,9 @@
                 @Html.DisplayFor(modelItem => item.BuildingLocation)
             </td>
             <td>
-                <a asp-page="./Edit" asp-route-id="@item.DeptName">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.DeptName">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.DeptName">Delete</a>
+                <a asp-page="./Edit" asp-route-id="@item.Name">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.Name">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Name">Delete</a>
             </td>
         </tr>
 }

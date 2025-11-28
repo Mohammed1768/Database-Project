@@ -21,7 +21,7 @@ namespace University_HR_ManagementSystem.Pages.Employees
 
         public IActionResult OnGet()
         {
-        ViewData["DeptName"] = new SelectList(_context.Set<Department>(), "DeptName", "DeptName");
+        ViewData["DeptName"] = new SelectList(_context.Department, "Name", "Name");
             return Page();
         }
 

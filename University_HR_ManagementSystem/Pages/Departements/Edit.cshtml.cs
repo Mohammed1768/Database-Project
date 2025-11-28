@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using University_HR_ManagementSystem.Data;
 using University_HR_ManagementSystem.Models;
 
-namespace University_HR_ManagementSystem.Pages.Departments
+namespace University_HR_ManagementSystem.Pages.Departements
 {
     public class EditModel : PageModel
     {
@@ -30,7 +30,7 @@ namespace University_HR_ManagementSystem.Pages.Departments
                 return NotFound();
             }
 
-            var department =  await _context.Department.FirstOrDefaultAsync(m => m.DeptName == id);
+            var department =  await _context.Department.FirstOrDefaultAsync(m => m.Name == id);
             if (department == null)
             {
                 return NotFound();
@@ -56,7 +56,7 @@ namespace University_HR_ManagementSystem.Pages.Departments
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!DepartmentExists(Department.DeptName))
+                if (!DepartmentExists(Department.Name))
                 {
                     return NotFound();
                 }
@@ -71,7 +71,7 @@ namespace University_HR_ManagementSystem.Pages.Departments
 
         private bool DepartmentExists(string id)
         {
-            return _context.Department.Any(e => e.DeptName == id);
+            return _context.Department.Any(e => e.Name == id);
         }
     }
 }

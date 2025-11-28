@@ -7,9 +7,11 @@ namespace University_HR_ManagementSystem.Models
     {
         [Key]
         [MaxLength(50)]
-        public string DeptName { get; set; } = string.Empty;
+        [Column("name")]
+        public string Name { get; set; } = string.Empty;
 
         [MaxLength(50)]
+        [Column("building_location")]
         public string BuildingLocation { get; set; } = string.Empty;
     }
 }

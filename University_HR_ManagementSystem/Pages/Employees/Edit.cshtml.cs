@@ -36,7 +36,7 @@ namespace University_HR_ManagementSystem.Pages.Employees
                 return NotFound();
             }
             Employee = employee;
-           ViewData["DeptName"] = new SelectList(_context.Set<Department>(), "DeptName", "DeptName");
+           ViewData["DeptName"] = new SelectList(_context.Department, "Name", "Name");
             return Page();
         }
 
