@@ -1,0 +1,146 @@
+﻿@page
+@model AdminDashboardModel
+@{
+    ViewData["Title"] = "HR Dashboard";
+}
+
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: auto;
+        padding-top: 40px;
+    }
+
+    .dashboard-title {
+        text-align: center;
+        margin-bottom: 30px;
+        font-weight: 700;
+        font-size: 2rem;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 columns */
+        grid-template-rows: repeat(4, auto); /* 4 rows */
+        gap: 20px;
+    }
+
+    .dashboard-button {
+        padding: 25px;
+        background-color: #0d6efd;
+        border: none;
+        color: white;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: 0.3s;
+        box-shadow: rgba(0,0,0,0.1) 0 4px 8px;
+        width: 100%; /* button fills the grid cell */
+    }
+
+        .dashboard-button:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-3px);
+            box-shadow: rgba(0,0,0,0.2) 0 6px 12px;
+        }
+
+    .tooltip-text {
+        visibility: hidden; /* hide initially */
+        width: max-content;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        padding: 5px 8px;
+        border-radius: 4px;
+        position: absolute;
+        bottom: -30px; /* position under the button */
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0; /* for smooth fade-in */
+        transition: opacity 0.3s;
+        white-space: nowrap;
+        font-size: 12px;
+        z-index: 10;
+    }
+
+    .dashboard-button:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .logout-container {
+        margin-top: 35px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .logout-button {
+        padding: 10px 20px;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+        .logout-button:hover {
+            background-color: #bb2d3b;
+            transform: scale(1.05);
+        }
+</style>
+
+
+<div class="dashboard-container">
+    <h2 class="dashboard-title">Admin Dashboard</h2>
+
+    <div class="dashboard-grid">
+        <button class="dashboard-button">
+            Manage Annual Leaves
+            <span class="tooltip-text">approve/reject based on balance.</span>
+        </button>
+
+        <button class="dashboard-button">
+            Manage Accidental Leaves
+            <span class="tooltip-text">approve/reject based on balance.</span>
+        </button>
+
+        <button class="dashboard-button">
+            Manage Unpaid Leaves
+            <span class="tooltip-text">approve/reject unpaid leaves.</span>
+        </button>
+
+        <button class="dashboard-button">
+            Manage Compensation Leaves
+            <span class="tooltip-text">approve/reject compensation leaves.</span>
+        </button>
+
+        <button class="dashboard-button">
+            Deduct Missing Hours
+            <span class="tooltip-text">add deduction for missing hours.</span>
+        </button>
+
+        <button class="dashboard-button">
+            Deduct Missing Days
+            <span class="tooltip-text">add deduction for missing days.</span>
+        </button>
+
+        <button class="dashboard-button">
+            Deduct Unpaid Leave
+            <span class="tooltip-text">add deduction for unpaid leave.</span>
+        </button>
+
+        <button class="dashboard-button">
+            Generate Payroll
+            <span class="tooltip-text">generate monthly payroll.</span>
+        </button>
+
+    </div>
+
+    <div class="logout-container">
+        <form method="post" asp-page-handler="Logout">
+            <button type="submit" class="logout-button">Logout</button>
+        </form>
+    </div>
+</div>
