@@ -12,7 +12,6 @@ namespace University_HR_ManagementSystem.Services
 
         public LoginRepository(IConfiguration config)
         {
-            // Prefer "DefaultConnection" but fall back to the EF context connection if present
             _connectionString = config.GetConnectionString("DefaultConnection")
                 ?? config.GetConnectionString("University_HR_ManagementSystemContext")
                 ?? throw new InvalidOperationException("No connection string 'DefaultConnection' or 'University_HR_ManagementSystemContext' was found in configuration.");
@@ -23,24 +22,41 @@ namespace University_HR_ManagementSystem.Services
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return false;
 
-            // Query the employees table for a matching email/username and password.
-            // Adjust the table name ([Employee]) if your DB uses a different name (e.g., [Employees]).
-            const string sql = @"
-SELECT COUNT(1)
-FROM [Employee]
-WHERE [email] = @username AND [password] = @password";
+            // First, get the employee_id from email
+            const string getSql = @"
+                SELECT [employee_id]
+                FROM [Employee]
+                WHERE [email] = @username";
+
+            // Then call the EmployeeLoginValidation function with employee_id and password
+            const string validateSql = @"
+                SELECT dbo.EmployeeLoginValidation(@employee_id, @password)";
 
             await using var conn = new SqlConnection(_connectionString);
-            await using var cmd = new SqlCommand(sql, conn);
-            cmd.CommandType = CommandType.Text;
-            cmd.Parameters.AddWithValue("@username", username);
-            cmd.Parameters.AddWithValue("@password", password);
-
             await conn.OpenAsync();
-            var scalar = await cmd.ExecuteScalarAsync();
-            if (scalar == null || scalar == DBNull.Value) return false;
 
-            return Convert.ToInt32(scalar) > 0;
+            // Step 1: Get employee_id by email
+            await using var getCmd = new SqlCommand(getSql, conn);
+            getCmd.CommandType = CommandType.Text;
+            getCmd.Parameters.AddWithValue("@username", username);
+            var employeeIdScalar = await getCmd.ExecuteScalarAsync();
+
+            if (employeeIdScalar == null || employeeIdScalar == DBNull.Value)
+                return false;
+
+            int employeeId = Convert.ToInt32(employeeIdScalar);
+
+            // Step 2: Call EmployeeLoginValidation function
+            await using var validateCmd = new SqlCommand(validateSql, conn);
+            validateCmd.CommandType = CommandType.Text;
+            validateCmd.Parameters.AddWithValue("@employee_id", employeeId);
+            validateCmd.Parameters.AddWithValue("@password", password);
+
+            var result = await validateCmd.ExecuteScalarAsync();
+            if (result == null || result == DBNull.Value)
+                return false;
+
+            return Convert.ToInt32(result) == 1;
         }
     }
 }
